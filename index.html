@@ -1,0 +1,1668 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Görev Dağılımı Sistemi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .nav-item {
+      transition: all 0.3s ease;
+    }
+    
+    .nav-item:hover {
+      transform: translateY(-2px);
+    }
+    
+    .nav-item.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+    
+    .person-card {
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .person-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .task-card {
+      animation: slideIn 0.3s ease forwards;
+      transition: all 0.3s ease;
+    }
+    
+    .task-card.expired {
+      border-left-color: #ef4444 !important;
+      background: linear-gradient(135deg, #fee2e2, #fef2f2);
+      animation: pulse 2s infinite;
+    }
+    
+    .machine-card {
+      animation: slideIn 0.4s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .countdown-urgent {
+      animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .modal-backdrop {
+      backdrop-filter: blur(5px);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full gradient-bg">
+  <div id="app" class="h-full flex flex-col overflow-auto"><!-- Header -->
+   <header class="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4">
+    <h1 id="site-title" class="text-2xl font-bold text-white text-center">Görev Dağılımı Sistemi</h1>
+   </header><!-- Navigation -->
+   <nav class="bg-white/5 backdrop-blur-sm px-4 py-3">
+    <div class="flex flex-wrap justify-center gap-2"><button onclick="showPage('giris')" class="nav-item active px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="giris"> 🏠 Giriş </button> <button onclick="showPage('montaj')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="montaj"> 🔧 Montaj </button> <button onclick="showPage('kaynak')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="kaynak"> ⚡ Kaynak </button> <button onclick="showPage('idare')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="idare"> 📋 İdare </button> <button onclick="showPage('yonetim')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="yonetim"> 👔 Yönetim </button> <button onclick="showPage('makine')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="makine"> ��️ Makine </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 p-6 overflow-auto"><!-- Giriş Page -->
+    <div id="page-giris" class="page-content">
+     <div class="glass-card rounded-3xl p-8 max-w-2xl mx-auto text-center shadow-2xl">
+      <div class="text-6xl mb-6">
+       🏭
+      </div>
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">Hoş Geldiniz!</h2>
+      <p class="text-gray-600 text-lg mb-6">Görev dağılımı sistemine hoş geldiniz. Sol menüden departmanları seçerek personel kartlarını görüntüleyebilir, makine b��lümünden yeni iş emirleri ekleyebilirsiniz.</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+       <div class="bg-indigo-50 rounded-2xl p-4">
+        <div class="text-3xl mb-2">
+         🔧
+        </div>
+        <div class="font-semibold text-indigo-800">
+         Montaj
+        </div>
+        <div class="text-sm text-indigo-600">
+         4 Personel
+        </div>
+       </div>
+       <div class="bg-amber-50 rounded-2xl p-4">
+        <div class="text-3xl mb-2">
+         ⚡
+        </div>
+        <div class="font-semibold text-amber-800">
+         Kaynak
+        </div>
+        <div class="text-sm text-amber-600">
+         3 Personel
+        </div>
+       </div>
+       <div class="bg-emerald-50 rounded-2xl p-4">
+        <div class="text-3xl mb-2">
+         📋
+        </div>
+        <div class="font-semibold text-emerald-800">
+         İdare
+        </div>
+        <div class="text-sm text-emerald-600">
+         3 Personel
+        </div>
+       </div>
+       <div class="bg-purple-50 rounded-2xl p-4">
+        <div class="text-3xl mb-2">
+         👔
+        </div>
+        <div class="font-semibold text-purple-800">
+         Yönetim
+        </div>
+        <div class="text-sm text-purple-600">
+         4 Personel
+        </div>
+       </div>
+       <div class="bg-rose-50 rounded-2xl p-4 col-span-2 md:col-span-1">
+        <div class="text-3xl mb-2">
+         ⚙️
+        </div>
+        <div class="font-semibold text-rose-800">
+         Makine
+        </div>
+        <div class="text-sm text-rose-600">
+         İş Takibi
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Montaj Page -->
+    <div id="page-montaj" class="page-content hidden">
+     <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3"><span class="bg-indigo-500 p-2 rounded-xl">🔧</span> Montaj Departmanı</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.1s">
+        <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         T
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">TheVaner</h3>
+        <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('TheVaner')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="TheVaner"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
+        <div class="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         D
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">Dogi</h3>
+        <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('Dogi')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> G��rev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Dogi"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
+        <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         Y
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">Yakub</h3>
+        <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('Yakub')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Yakub"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.4s">
+        <div class="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         H
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">HakGül</h3>
+        <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('HakGül')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="HakG���l"></div>
+      </div>
+     </div>
+    </div><!-- Kaynak Page -->
+    <div id="page-kaynak" class="page-content hidden">
+     <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3"><span class="bg-amber-500 p-2 rounded-xl">⚡</span> Kaynak Departmanı</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.1s">
+        <div class="w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         S
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">SüleymanÇ</h3>
+        <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('SüleymanÇ')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="SüleymanÇ"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
+        <div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         M
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">MehmetY</h3>
+        <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('MehmetY')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="MehmetY"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
+        <div class="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         H
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">HakGül</h3>
+        <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('HakGül')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="HakGül"></div>
+      </div>
+     </div>
+    </div><!-- İdare Page -->
+    <div id="page-idare" class="page-content hidden">
+     <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3"><span class="bg-emerald-500 p-2 rounded-xl">📋</span> İdare Departmanı</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.1s">
+        <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         F
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">FettahCan</h3>
+        <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('FettahCan')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="FettahCan"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
+        <div class="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         E
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">ElfGök</h3>
+        <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('ElfGök')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="ElfGök"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
+        <div class="w-20 h-20 bg-gradient-to-br from-lime-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         A
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">AhmetYk</h3>
+        <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('AhmetYk')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="AhmetYk"></div>
+      </div>
+     </div>
+    </div><!-- Yönetim Page -->
+    <div id="page-yonetim" class="page-content hidden">
+     <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3"><span class="bg-purple-500 p-2 rounded-xl">👔</span> Yönetim Departmanı</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.1s">
+        <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         T
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">TheVaner</h3>
+        <p class="text-purple-600 text-sm mt-1">Yönetici</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">Lider</span>
+        </div><button onclick="openTaskModal('TheVaner')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> G��rev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="TheVaner"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
+        <div class="w-20 h-20 bg-gradient-to-br from-violet-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         F
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">FurkB</h3>
+        <p class="text-purple-600 text-sm mt-1">Yönetici</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('FurkB')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="FurkB"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
+        <div class="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         P
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">PINC</h3>
+        <p class="text-purple-600 text-sm mt-1">Yönetici</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('PINC')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="PINC"></div>
+      </div>
+      <div class="person-container">
+       <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.4s">
+        <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
+         T
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg">TUNC</h3>
+        <p class="text-purple-600 text-sm mt-1">Yönetici</p>
+        <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
+        </div><button onclick="openTaskModal('TUNC')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Görev Ekle </button>
+       </div>
+       <div class="tasks-container mt-4 space-y-3" data-person="TUNC"></div>
+      </div>
+     </div>
+    </div><!-- Makine Page -->
+    <div id="page-makine" class="page-content hidden">
+     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="bg-rose-500 p-2 rounded-xl">��️</span> Makine Takip</h2><button onclick="openMachineModal()" class="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+       </svg> Form Ekle </button>
+     </div>
+     <div id="machine-list" class="grid grid-cols-1 lg:grid-cols-2 gap-5"><!-- Machine cards will be rendered here -->
+     </div>
+     <div id="empty-state" class="glass-card rounded-2xl p-12 text-center">
+      <div class="text-6xl mb-4">
+       🔩
+      </div>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">Henüz makine kaydı yok</h3>
+      <p class="text-gray-500">Yeni bir makine eklemek için "Form Ekle" butonuna tıklayın.</p>
+     </div>
+    </div>
+   </main><!-- Task Modal -->
+   <div id="task-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeTaskModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeTaskModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 id="task-modal-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span class="bg-blue-100 text-blue-600 p-2 rounded-xl">��</span> Yeni Görev Ekle</h3>
+      <form id="task-form" onsubmit="handleTaskSubmit(event)" class="space-y-5">
+       <div><label for="gorev-tanimlamasi" class="block text-sm font-medium text-gray-700 mb-2">Görev Tanımı</label> <textarea id="gorev-tanimlamasi" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" placeholder="Görev açıklaması girin..." rows="4"></textarea>
+       </div>
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="task-bitis-tarih" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label> <input type="date" id="task-bitis-tarih" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+        </div>
+        <div><label for="task-bitis-saat" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Saati</label> <input type="time" id="task-bitis-saat" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+        </div>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeTaskModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="task-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Tamam </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Machine Modal -->
+   <div id="machine-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeMachineModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative animate-fadeIn"><button onclick="closeMachineModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span class="bg-rose-100 text-rose-600 p-2 rounded-xl">⚙️</span> Yeni Makine Ekle</h3>
+      <form id="machine-form" onsubmit="handleMachineSubmit(event)" class="space-y-5">
+       <div><label for="seri" class="block text-sm font-medium text-gray-700 mb-2">Seri Numarası</label> <input type="text" id="seri" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all" placeholder="Örn: SN-2024-001">
+       </div>
+       <div><label for="model" class="block text-sm font-medium text-gray-700 mb-2">Makine Modeli</label> <input type="text" id="model" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all" placeholder="Örn: CNC Torna, Laser Kesim...">
+       </div>
+       <div><label for="firma" class="block text-sm font-medium text-gray-700 mb-2">Sipariş Veren Firma</label> <input type="text" id="firma" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all" placeholder="Firma adını girin...">
+       </div>
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="bitis-tarih" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label> <input type="date" id="bitis-tarih" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all">
+        </div>
+        <div><label for="bitis-saat" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Saati</label> <input type="time" id="bitis-saat" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all">
+        </div>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeMachineModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="machine-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Tamam </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Edit Machine Modal -->
+   <div id="edit-machine-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeEditMachineModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative animate-fadeIn"><button onclick="closeEditMachineModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✏️</span> Makine Bilgisini Düzenle</h3>
+      <form id="edit-machine-form" onsubmit="handleEditMachineSubmit(event)" class="space-y-5">
+       <div><label for="edit-seri" class="block text-sm font-medium text-gray-700 mb-2">Seri Numarası</label> <input type="text" id="edit-seri" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Örn: SN-2024-001">
+       </div>
+       <div><label for="edit-model" class="block text-sm font-medium text-gray-700 mb-2">Makine Modeli</label> <input type="text" id="edit-model" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Örn: CNC Torna, Laser Kesim...">
+       </div>
+       <div><label for="edit-firma" class="block text-sm font-medium text-gray-700 mb-2">Sipariş Veren Firma</label> <input type="text" id="edit-firma" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Firma adını girin...">
+       </div>
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="edit-bitis-tarih" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label> <input type="date" id="edit-bitis-tarih" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+        </div>
+        <div><label for="edit-bitis-saat" class="block text-sm font-medium text-gray-700 mb-2">Bitiş Saati</label> <input type="time" id="edit-bitis-saat" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+        </div>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeEditMachineModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="edit-machine-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Kaydet </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Mazeret Modal -->
+   <div id="mazeret-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeMazeretModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeMazeretModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3"><span class="bg-red-100 p-2 rounded-xl">��️</span> Görev Süresi Doldu!</h3>
+      <p class="text-gray-600 mb-6">Görev tamamlanmamış. Lütfen nedeni belirtiniz:</p>
+      <div><textarea id="mazeret-input" class="w-full px-4 py-3 border border-red-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none" placeholder="Mazeret veya not girin..." rows="4"></textarea>
+      </div>
+      <div class="flex gap-3 mt-6"><button onclick="closeMazeretModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button onclick="saveMazeret()" id="mazeret-save-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Kaydet </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Machine Issue Modal -->
+   <div id="issue-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeIssueModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeIssueModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 id="issue-modal-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span id="issue-icon" class="bg-red-100 p-2 rounded-xl">⚠️</span> <span id="issue-type-name">Hata Gir</span></h3>
+      <form id="issue-form" onsubmit="handleIssueSubmit(event)" class="space-y-5">
+       <div>
+        <div class="flex items-center justify-between mb-2"><label for="issue-input" class="block text-sm font-medium text-gray-700" id="issue-label">Hata Detayları</label> <button type="button" onclick="playIssueSound()" class="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white p-2 rounded-lg transition-all shadow-md" title="Ses">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707a1 1 0 011.414 0l4.707 4.707V9a1 1 0 011 1v4a1 1 0 01-1 1h-1.586l-4.707 4.707a1 1 0 01-1.414 0L5.586 15z"></path>
+          </svg></button>
+        </div><textarea id="issue-input" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" placeholder="Detay girin..." rows="4"></textarea>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeIssueModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="issue-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Kaydet </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Delete Confirmation Modal -->
+   <div id="delete-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeDeleteModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Silmek istediğinize emin misiniz?</h3>
+      <p class="text-gray-600 mb-6">Bu işlem geri alınamaz.</p>
+      <div class="flex gap-3"><button onclick="closeDeleteModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button onclick="confirmDelete()" id="confirm-delete-btn" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all"> Sil </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Machine Password Modal -->
+   <div id="machine-password-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeMachinePasswordModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeMachinePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span class="bg-red-100 text-red-600 p-2 rounded-xl">🔐</span> Makineyi Sil</h3>
+      <form id="machine-password-form" onsubmit="handleMachinePasswordSubmit(event)" class="space-y-5">
+       <div><label for="machine-password" class="block text-sm font-medium text-gray-700 mb-2"> Şifre: 112263 </label> <input type="password" id="machine-password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" placeholder="Şifreyi girin...">
+        <div id="password-error" class="text-red-500 text-sm mt-2 hidden">
+         Şifre yanlış!
+        </div>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeMachinePasswordModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="machine-password-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Sil </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Delete Issue Confirmation Modal -->
+   <div id="delete-issue-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeDeleteIssueModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Silmek istediğinize emin misiniz?</h3>
+      <p class="text-gray-600 mb-6">Bu işlem geri alınamaz.</p>
+      <div class="flex gap-3"><button onclick="closeDeleteIssueModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button onclick="confirmDeleteIssue()" id="confirm-delete-issue-btn" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all"> Sil </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Edit Issue Modal -->
+   <div id="edit-issue-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeEditIssueModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeEditIssueModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span id="edit-issue-icon" class="bg-red-100 p-2 rounded-xl">⚠️</span> <span id="edit-issue-type-name">Hata Düzenle</span></h3>
+      <form id="edit-issue-form" onsubmit="handleEditIssueSubmit(event)" class="space-y-5">
+       <div><label for="edit-issue-input" class="block text-sm font-medium text-gray-700 mb-2">Detayları Düzenle</label> <textarea id="edit-issue-input" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" placeholder="Detay girin..." rows="4"></textarea>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeEditIssueModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="edit-issue-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Kaydet </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      site_title: 'Görev Dağılımı Sistemi'
+    };
+    
+    let config = { ...defaultConfig };
+    let allTasks = [];
+    let machines = [];
+    let countdownIntervals = {};
+    let deleteTargetId = null;
+    let currentTaskPerson = null;
+    let currentMazeretTaskId = null;
+    let currentIssueId = null;
+    let currentIssueType = null;
+    
+    // Play sound for issue
+    function playIssueSound() {
+      const text = document.getElementById('issue-type-name').textContent;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'tr-TR';
+        utterance.rate = 1;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+    
+    // Page navigation
+    function showPage(pageName) {
+      document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.add('hidden');
+      });
+      document.getElementById(`page-${pageName}`).classList.remove('hidden');
+      
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+    }
+    
+    // Task Modal
+    function openTaskModal(personName) {
+      currentTaskPerson = personName;
+      document.getElementById('task-modal-title').innerHTML = `<span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✓</span> ${personName} - Görev Ekle`;
+      document.getElementById('task-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('task-bitis-tarih').min = today;
+    }
+    
+    function closeTaskModal() {
+      document.getElementById('task-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('task-form').reset();
+      currentTaskPerson = null;
+    }
+    
+    // Machine Modal
+    function openMachineModal() {
+      document.getElementById('machine-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('bitis-tarih').min = today;
+    }
+    
+    function closeMachineModal() {
+      document.getElementById('machine-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('machine-form').reset();
+    }
+    
+    // Mazeret Modal
+    function openMazeretModal(taskId) {
+      currentMazeretTaskId = taskId;
+      document.getElementById('mazeret-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('mazeret-input').value = '';
+    }
+    
+    function closeMazeretModal() {
+      document.getElementById('mazeret-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      currentMazeretTaskId = null;
+    }
+    
+    async function saveMazeret() {
+      if (!currentMazeretTaskId) return;
+      
+      const mazeret = document.getElementById('mazeret-input').value.trim();
+      if (!mazeret) {
+        showToast('Lütfen mazeret girin!', 'error');
+        return;
+      }
+      
+      const task = allTasks.find(t => t.__backendId === currentMazeretTaskId);
+      if (!task) {
+        closeMazeretModal();
+        return;
+      }
+      
+      const btn = document.getElementById('mazeret-save-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const result = await window.dataSdk.update({
+        ...task,
+        gorev_mazereti: mazeret
+      });
+      
+      btn.disabled = false;
+      btn.textContent = 'Kaydet';
+      
+      if (result.isOk) {
+        closeMazeretModal();
+        showToast('Mazeret kaydedildi!');
+      } else {
+        showToast('Hata olu��tu!', 'error');
+      }
+    }
+    
+    // Issue Modal
+    function openIssueModal(machineId, issueType) {
+      currentIssueId = machineId;
+      currentIssueType = issueType;
+      
+      const title = issueType === 'error' ? 'Hata Gir' : 'Revize Gir';
+      const label = issueType === 'error' ? 'Hata Detayları' : 'Revize Detayları';
+      const icon = issueType === 'error' ? '⚠️' : '🔧';
+      
+      document.getElementById('issue-type-name').textContent = title;
+      document.getElementById('issue-label').textContent = label;
+      document.getElementById('issue-icon').textContent = icon;
+      document.getElementById('issue-input').placeholder = `${label.toLowerCase()} girin...`;
+      
+      const colors = issueType === 'error' 
+        ? 'from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600'
+        : 'from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600';
+      
+      document.getElementById('issue-submit-btn').className = 
+        `flex-1 px-6 py-3 bg-gradient-to-r ${colors} text-white rounded-xl font-semibold shadow-lg transition-all`;
+      
+      document.getElementById('issue-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('issue-input').value = '';
+    }
+    
+    function closeIssueModal() {
+      document.getElementById('issue-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('issue-input').value = '';
+      currentIssueId = null;
+      currentIssueType = null;
+    }
+    
+    async function handleIssueSubmit(event) {
+      event.preventDefault();
+      
+      if (!currentIssueId) return;
+      
+      const issueValue = document.getElementById('issue-input').value.trim();
+      if (!issueValue) {
+        showToast('Lütfen detay girin!', 'error');
+        return;
+      }
+      
+      const machine = machines.find(m => m.__backendId === currentIssueId);
+      if (!machine) {
+        closeIssueModal();
+        return;
+      }
+      
+      const btn = document.getElementById('issue-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const updateData = { ...machine };
+      
+      if (currentIssueType === 'error') {
+        try {
+          const errors = JSON.parse(machine.makine_hatasi || '[]');
+          errors.push(issueValue);
+          updateData.makine_hatasi = JSON.stringify(errors);
+        } catch (e) {
+          const errors = machine.makine_hatasi ? [machine.makine_hatasi, issueValue] : [issueValue];
+          updateData.makine_hatasi = JSON.stringify(errors);
+        }
+      } else {
+        try {
+          const revisions = JSON.parse(machine.makine_revizesi || '[]');
+          revisions.push(issueValue);
+          updateData.makine_revizesi = JSON.stringify(revisions);
+        } catch (e) {
+          const revisions = machine.makine_revizesi ? [machine.makine_revizesi, issueValue] : [issueValue];
+          updateData.makine_revizesi = JSON.stringify(revisions);
+        }
+      }
+      
+      const result = await window.dataSdk.update(updateData);
+      
+      btn.disabled = false;
+      btn.textContent = 'Kaydet';
+      
+      if (result.isOk) {
+        closeIssueModal();
+        showToast('Detay kaydedildi!');
+      } else {
+        showToast('Hata oluştu!', 'error');
+      }
+    }
+    
+    // Delete Issue Modal
+    let deleteIssueData = null;
+    
+    function openDeleteIssueModal(machineId, issueType, index, content) {
+      deleteIssueData = { machineId, issueType, index, content };
+      document.getElementById('delete-issue-modal').classList.remove('hidden');
+    }
+    
+    function closeDeleteIssueModal() {
+      document.getElementById('delete-issue-modal').classList.add('hidden');
+      deleteIssueData = null;
+    }
+    
+    async function confirmDeleteIssue() {
+      if (!deleteIssueData) return;
+      
+      const { machineId, issueType, index } = deleteIssueData;
+      
+      if (issueType === 'error') {
+        await removeError(machineId, index);
+      } else {
+        await removeRevision(machineId, index);
+      }
+      
+      closeDeleteIssueModal();
+    }
+    
+    // Edit Issue Modal
+    let editIssueData = null;
+    
+    function openEditIssueModal(machineId, issueType, index, content) {
+      editIssueData = { machineId, issueType, index, oldContent: content };
+      
+      const title = issueType === 'error' ? 'Hata Düzenle' : 'Revize Düzenle';
+      const icon = issueType === 'error' ? '⚠️' : '����';
+      
+      document.getElementById('edit-issue-type-name').textContent = title;
+      document.getElementById('edit-issue-icon').textContent = icon;
+      document.getElementById('edit-issue-input').value = content;
+      
+      const colors = issueType === 'error' 
+        ? 'from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600'
+        : 'from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600';
+      
+      document.getElementById('edit-issue-submit-btn').className = 
+        `flex-1 px-6 py-3 bg-gradient-to-r ${colors} text-white rounded-xl font-semibold shadow-lg transition-all`;
+      
+      document.getElementById('edit-issue-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeEditIssueModal() {
+      document.getElementById('edit-issue-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      editIssueData = null;
+    }
+    
+    async function handleEditIssueSubmit(event) {
+      event.preventDefault();
+      
+      if (!editIssueData) return;
+      
+      const { machineId, issueType, index, oldContent } = editIssueData;
+      const newContent = document.getElementById('edit-issue-input').value.trim();
+      
+      if (!newContent) {
+        showToast('Lütfen detay girin!', 'error');
+        return;
+      }
+      
+      const machine = machines.find(m => m.__backendId === machineId);
+      if (!machine) {
+        closeEditIssueModal();
+        return;
+      }
+      
+      const btn = document.getElementById('edit-issue-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const updateData = { ...machine };
+      
+      if (issueType === 'error') {
+        try {
+          const errors = JSON.parse(machine.makine_hatasi || '[]');
+          if (Array.isArray(errors) && errors[index]) {
+            errors[index] = newContent;
+            updateData.makine_hatasi = JSON.stringify(errors);
+          }
+        } catch (e) {
+          if (index === 0) {
+            updateData.makine_hatasi = newContent;
+          }
+        }
+      } else {
+        try {
+          const revisions = JSON.parse(machine.makine_revizesi || '[]');
+          if (Array.isArray(revisions) && revisions[index]) {
+            revisions[index] = newContent;
+            updateData.makine_revizesi = JSON.stringify(revisions);
+          }
+        } catch (e) {
+          if (index === 0) {
+            updateData.makine_revizesi = newContent;
+          }
+        }
+      }
+      
+      const result = await window.dataSdk.update(updateData);
+      
+      btn.disabled = false;
+      btn.textContent = 'Kaydet';
+      
+      if (result.isOk) {
+        closeEditIssueModal();
+        showToast('Detay güncellendi!');
+      } else {
+        showToast('Hata oluştu!', 'error');
+      }
+    }
+    
+    function closeDeleteModal() {
+      deleteTargetId = null;
+      document.getElementById('delete-modal').classList.add('hidden');
+    }
+    
+    async function confirmDelete() {
+      if (!deleteTargetId) return;
+      
+      const task = allTasks.find(t => t.__backendId === deleteTargetId);
+      if (!task) {
+        closeDeleteModal();
+        return;
+      }
+      
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled = true;
+      btn.textContent = 'Siliniyor...';
+      
+      const result = await window.dataSdk.delete(task);
+      
+      btn.disabled = false;
+      btn.textContent = 'Sil';
+      
+      if (!result.isOk) {
+        showToast('Silme işlemi başarısız oldu!', 'error');
+      }
+      
+      closeDeleteModal();
+    }
+    
+    // Toast
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-xl shadow-lg z-50 ${
+        type === 'error' ? 'bg-red-500' : 'bg-green-500'
+      } text-white font-medium`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
+    
+    async function removeError(machineId, index) {
+      const machine = machines.find(m => m.__backendId === machineId);
+      if (!machine) return;
+      
+      try {
+        const errors = JSON.parse(machine.makine_hatasi || '[]');
+        errors.splice(index, 1);
+        
+        const result = await window.dataSdk.update({
+          ...machine,
+          makine_hatasi: JSON.stringify(errors)
+        });
+        
+        if (!result.isOk) {
+          showToast('Silme işlemi başarısız!', 'error');
+        }
+      } catch (e) {
+        const result = await window.dataSdk.update({
+          ...machine,
+          makine_hatasi: ''
+        });
+        
+        if (!result.isOk) {
+          showToast('Silme işlemi başarısız!', 'error');
+        }
+      }
+    }
+    
+    async function removeRevision(machineId, index) {
+      const machine = machines.find(m => m.__backendId === machineId);
+      if (!machine) return;
+      
+      try {
+        const revisions = JSON.parse(machine.makine_revizesi || '[]');
+        revisions.splice(index, 1);
+        
+        const result = await window.dataSdk.update({
+          ...machine,
+          makine_revizesi: JSON.stringify(revisions)
+        });
+        
+        if (!result.isOk) {
+          showToast('Silme işlemi başarısız!', 'error');
+        }
+      } catch (e) {
+        const result = await window.dataSdk.update({
+          ...machine,
+          makine_revizesi: ''
+        });
+        
+        if (!result.isOk) {
+          showToast('Silme işlemi ba����arısız!', 'error');
+        }
+      }
+    }
+    
+    let currentEditMachineId = null;
+    let currentDeleteMachineId = null;
+    
+    // Machine Password Modal
+    function openMachinePasswordModal(machineId) {
+      currentDeleteMachineId = machineId;
+      document.getElementById('machine-password-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('machine-password').value = '';
+      document.getElementById('password-error').classList.add('hidden');
+    }
+    
+    function closeMachinePasswordModal() {
+      document.getElementById('machine-password-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('machine-password').value = '';
+      document.getElementById('password-error').classList.add('hidden');
+      currentDeleteMachineId = null;
+    }
+    
+    async function handleMachinePasswordSubmit(event) {
+      event.preventDefault();
+      
+      const password = document.getElementById('machine-password').value;
+      const errorDiv = document.getElementById('password-error');
+      
+      if (password !== '112263') {
+        errorDiv.classList.remove('hidden');
+        document.getElementById('machine-password').value = '';
+        return;
+      }
+      
+      errorDiv.classList.add('hidden');
+      
+      if (!currentDeleteMachineId) {
+        closeMachinePasswordModal();
+        return;
+      }
+      
+      const machine = machines.find(m => m.__backendId === currentDeleteMachineId);
+      if (!machine) {
+        closeMachinePasswordModal();
+        return;
+      }
+      
+      const btn = document.getElementById('machine-password-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Siliniyor...';
+      
+      const result = await window.dataSdk.delete(machine);
+      
+      btn.disabled = false;
+      btn.textContent = 'Sil';
+      
+      if (result.isOk) {
+        closeMachinePasswordModal();
+        showToast('Makine silindi!');
+      } else {
+        showToast('Silme işlemi başarısız oldu!', 'error');
+      }
+    }
+    
+    // Edit Machine Modal
+    function openEditMachineModal(machineId) {
+      currentEditMachineId = machineId;
+      const machine = machines.find(m => m.__backendId === machineId);
+      if (!machine) return;
+      
+      const bitisTarihi = new Date(machine.bitis_tarihi);
+      const tarih = bitisTarihi.toISOString().split('T')[0];
+      const saat = bitisTarihi.toTimeString().slice(0, 5);
+      
+      document.getElementById('edit-seri').value = machine.seri_numarasi || '';
+      document.getElementById('edit-model').value = machine.makine_modeli || '';
+      document.getElementById('edit-firma').value = machine.siparis_firma || '';
+      document.getElementById('edit-bitis-tarih').value = tarih;
+      document.getElementById('edit-bitis-saat').value = saat;
+      
+      document.getElementById('edit-machine-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeEditMachineModal() {
+      document.getElementById('edit-machine-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('edit-machine-form').reset();
+      currentEditMachineId = null;
+    }
+    
+    async function handleEditMachineSubmit(event) {
+      event.preventDefault();
+      
+      if (!currentEditMachineId) return;
+      
+      const machine = machines.find(m => m.__backendId === currentEditMachineId);
+      if (!machine) {
+        closeEditMachineModal();
+        return;
+      }
+      
+      const seri = document.getElementById('edit-seri').value;
+      const model = document.getElementById('edit-model').value;
+      const firma = document.getElementById('edit-firma').value;
+      const bitisTarih = document.getElementById('edit-bitis-tarih').value;
+      const bitisSaat = document.getElementById('edit-bitis-saat').value;
+      const bitisTarihi = new Date(`${bitisTarih}T${bitisSaat}`).toISOString();
+      
+      const btn = document.getElementById('edit-machine-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const result = await window.dataSdk.update({
+        ...machine,
+        seri_numarasi: seri,
+        makine_modeli: model,
+        siparis_firma: firma,
+        bitis_tarihi: bitisTarihi
+      });
+      
+      btn.disabled = false;
+      btn.textContent = 'Kaydet';
+      
+      if (result.isOk) {
+        closeEditMachineModal();
+        showToast('Makine güncellendi!');
+      } else {
+        showToast('Hata!', 'error');
+      }
+    }
+    
+    // Calculate countdown
+    function calculateCountdown(endDate) {
+      const now = new Date();
+      const end = new Date(endDate);
+      const diff = end - now;
+      
+      if (diff <= 0) {
+        return { expired: true, text: 'Süre Doldu!', urgent: false };
+      }
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      let text = '';
+      if (days > 0) text += `${days}g `;
+      text += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      return { expired: false, text, urgent: diff < 3600000 };
+    }
+    
+    // Complete task
+    async function completeTask(taskId) {
+      const task = allTasks.find(t => t.__backendId === taskId);
+      if (!task) return;
+      
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const result = await window.dataSdk.update({
+        ...task,
+        gorev_tamamlandi: true
+      });
+      
+      btn.disabled = false;
+      btn.textContent = '✓ Tamamlandı';
+      
+      if (result.isOk) {
+        showToast('Görev tamamlandı!');
+      } else {
+        showToast('Hata oluştu!', 'error');
+      }
+    }
+    
+    // Render tasks
+    function renderTasksForPerson(personName) {
+      const container = document.querySelector(`.tasks-container[data-person="${personName}"]`);
+      if (!container) return;
+      
+      const personTasks = allTasks.filter(t => t.kisi_adi === personName && t.gorev_tanimlamasi);
+      
+      const existingTasks = new Map();
+      container.querySelectorAll('[data-task-id]').forEach(card => {
+        existingTasks.set(card.dataset.taskId, card);
+      });
+      
+      personTasks.forEach((task, index) => {
+        const id = task.__backendId;
+        const countdown = calculateCountdown(task.gorev_bitis_tarihi);
+        const bitisTarihi = new Date(task.gorev_bitis_tarihi);
+        const isCompleted = task.gorev_tamamlandi;
+        
+        if (existingTasks.has(id)) {
+          const card = existingTasks.get(id);
+          const countdownEl = card.querySelector('.task-countdown');
+          if (countdownEl) {
+            countdownEl.textContent = countdown.text;
+            countdownEl.classList.toggle('countdown-urgent', countdown.urgent);
+            countdownEl.classList.toggle('text-red-600', countdown.expired || countdown.urgent);
+            countdownEl.classList.toggle('text-blue-600', !countdown.expired && !countdown.urgent);
+          }
+          
+          // Update mazeret if it exists
+          const mazeretContainer = card.querySelector('.mazeret-section');
+          if (task.gorev_mazereti && task.gorev_mazereti.trim()) {
+            if (mazeretContainer) {
+              mazeretContainer.innerHTML = `<div class="bg-orange-50 rounded-lg p-2 mt-2 border border-orange-200">
+                <p class="text-xs text-orange-600 font-semibold mb-1">📝 Mazeret:</p>
+                <p class="text-sm text-orange-700">${task.gorev_mazereti}</p>
+              </div>`;
+            }
+          } else if (mazeretContainer) {
+            mazeretContainer.innerHTML = '';
+          }
+          
+          card.classList.toggle('expired', countdown.expired && !isCompleted);
+          
+          if (countdown.expired && !isCompleted && !card.dataset.expiredHandled) {
+            card.dataset.expiredHandled = 'true';
+            openMazeretModal(id);
+          }
+          
+          existingTasks.delete(id);
+        } else {
+          const card = document.createElement('div');
+          card.dataset.taskId = id;
+          card.className = `task-card glass-card rounded-xl p-4 shadow-lg border-l-4 ${
+            isCompleted ? 'border-green-500 bg-green-50' : 'border-blue-500'
+          }`;
+          card.style.animationDelay = `${index * 0.1}s`;
+          
+          if (countdown.expired && !isCompleted) {
+            card.classList.add('expired');
+          }
+          
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-800 text-sm mb-1">📝 Görev</h4>
+                <p class="text-gray-600 text-sm line-clamp-2">${task.gorev_tanimlamasi}</p>
+              </div>
+              <button onclick="openDeleteModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="bg-blue-50 rounded-lg p-2 mb-3">
+              <p class="text-xs text-blue-600 mb-1">⏱️ Bitiş: ${bitisTarihi.toLocaleDateString('tr-TR')} ${bitisTarihi.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})}</p>
+              <p class="task-countdown font-semibold text-sm ${countdown.expired || countdown.urgent ? 'text-red-600 countdown-urgent' : 'text-blue-600'}">
+                ${countdown.text}
+              </p>
+            </div>
+            
+            ${isCompleted ? `
+              <div class="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-center font-semibold text-sm">
+                ✓ Görev Tamamlandı
+              </div>
+            ` : countdown.expired ? `
+              <button onclick="openMazeretModal('${id}')" class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
+                ⚠️ Mazeret Ekle
+              </button>
+            ` : `
+              <button onclick="completeTask('${id}')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
+                ✓ Tamamla
+              </button>
+            `}
+            
+            <div class="mazeret-section mt-3"></div>
+          `;
+          
+          container.appendChild(card);
+          
+          if (countdownIntervals[id]) clearInterval(countdownIntervals[id]);
+          
+          countdownIntervals[id] = setInterval(() => {
+            const updatedCard = document.querySelector(`[data-task-id="${id}"]`);
+            if (updatedCard) {
+              const countdownEl = updatedCard.querySelector('.task-countdown');
+              const newCountdown = calculateCountdown(task.gorev_bitis_tarihi);
+              if (countdownEl) {
+                countdownEl.textContent = newCountdown.text;
+                countdownEl.classList.toggle('countdown-urgent', newCountdown.urgent);
+                countdownEl.classList.toggle('text-red-600', newCountdown.expired || newCountdown.urgent);
+                countdownEl.classList.toggle('text-blue-600', !newCountdown.expired && !newCountdown.urgent);
+              }
+              
+              if (newCountdown.expired && !isCompleted) {
+                updatedCard.classList.add('expired');
+                if (!updatedCard.dataset.expiredHandled) {
+                  updatedCard.dataset.expiredHandled = 'true';
+                  openMazeretModal(id);
+                }
+              }
+            }
+          }, 1000);
+        }
+      });
+      
+      existingTasks.forEach(card => card.remove());
+    }
+    
+    function renderAllTasks() {
+      const people = [
+        'TheVaner', 'Dogi', 'Yakub', 'HakGül',
+        'SüleymanÇ', 'MehmetY',
+        'FettahCan', 'ElfGök', 'AhmetYk',
+        'FurkB', 'PINC', 'TUNC'
+      ];
+      
+      people.forEach(person => renderTasksForPerson(person));
+    }
+    
+    // Render machines
+    function renderMachines() {
+      const container = document.getElementById('machine-list');
+      const emptyState = document.getElementById('empty-state');
+      
+      Object.values(countdownIntervals).forEach(interval => clearInterval(interval));
+      countdownIntervals = {};
+      
+      const machineData = machines.filter(m => m.seri_numarasi && m.makine_modeli);
+      
+      if (machineData.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      
+      emptyState.classList.add('hidden');
+      
+      const existingCards = new Map();
+      container.querySelectorAll('[data-machine-id]').forEach(card => {
+        existingCards.set(card.dataset.machineId, card);
+      });
+      
+      machineData.forEach((machine, index) => {
+        const id = machine.__backendId;
+        const countdown = calculateCountdown(machine.bitis_tarihi);
+        const bitisTarihi = new Date(machine.bitis_tarihi);
+        const olusturmaTarihi = new Date(machine.olusturma_tarihi);
+        
+        if (existingCards.has(id)) {
+          const card = existingCards.get(id);
+          const countdownEl = card.querySelector('.countdown-display');
+          if (countdownEl) {
+            countdownEl.textContent = countdown.text;
+            countdownEl.classList.toggle('countdown-urgent', countdown.urgent);
+            countdownEl.classList.toggle('text-red-600', countdown.expired || countdown.urgent);
+            countdownEl.classList.toggle('text-emerald-600', !countdown.expired && !countdown.urgent);
+          }
+          
+          // Update error section
+          const errorContainer = card.querySelector('.error-section');
+          if (machine.makine_hatasi && machine.makine_hatasi.trim()) {
+            try {
+              const errors = JSON.parse(machine.makine_hatasi);
+              if (Array.isArray(errors) && errors.length > 0) {
+                errorContainer.innerHTML = errors.map((error, idx) => `
+                  <div class="bg-red-50 rounded-lg p-3 border border-red-200 flex justify-between items-start gap-2">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-red-600 font-semibold mb-1">Hata ${idx + 1}</p>
+                      <p class="text-sm text-red-700 break-words">${error}</p>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0">
+                      <button onclick="openEditIssueModal('${id}', 'error', ${idx}, '${error.replace(/'/g, "\\'")}')" class="text-blue-400 hover:text-blue-600 transition-colors p-1" title="Düzenle">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
+                      <button onclick="openDeleteIssueModal('${id}', 'error', ${idx}, '${error.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-600 transition-colors p-1" title="Sil">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                `).join('');
+              } else {
+                errorContainer.innerHTML = '';
+              }
+            } catch (e) {
+              errorContainer.innerHTML = `
+                <div class="bg-red-50 rounded-lg p-3 border border-red-200 flex justify-between items-start gap-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs text-red-600 font-semibold mb-1">Hata 1</p>
+                    <p class="text-sm text-red-700 break-words">${machine.makine_hatasi}</p>
+                  </div>
+                  <div class="flex gap-1 flex-shrink-0">
+                    <button onclick="openEditIssueModal('${id}', 'error', 0, '${machine.makine_hatasi.replace(/'/g, "\\'")}')" class="text-blue-400 hover:text-blue-600 transition-colors p-1" title="Düzenle">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </button>
+                    <button onclick="openDeleteIssueModal('${id}', 'error', 0, '${machine.makine_hatasi.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-600 transition-colors p-1" title="Sil">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+          } else {
+            errorContainer.innerHTML = '';
+          }
+          
+          // Update revision section
+          const revisionContainer = card.querySelector('.revision-section');
+          if (machine.makine_revizesi && machine.makine_revizesi.trim()) {
+            try {
+              const revisions = JSON.parse(machine.makine_revizesi);
+              if (Array.isArray(revisions) && revisions.length > 0) {
+                revisionContainer.innerHTML = revisions.map((revision, idx) => `
+                  <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 flex justify-between items-start gap-2">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-amber-600 font-semibold mb-1">Revize ${idx + 1}</p>
+                      <p class="text-sm text-amber-700 break-words">${revision}</p>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0">
+                      <button onclick="openEditIssueModal('${id}', 'revision', ${idx}, '${revision.replace(/'/g, "\\'")}')" class="text-blue-400 hover:text-blue-600 transition-colors p-1" title="Düzenle">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
+                      <button onclick="openDeleteIssueModal('${id}', 'revision', ${idx}, '${revision.replace(/'/g, "\\'")}')" class="text-amber-400 hover:text-amber-600 transition-colors p-1" title="Sil">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                `).join('');
+              } else {
+                revisionContainer.innerHTML = '';
+              }
+            } catch (e) {
+              revisionContainer.innerHTML = `
+                <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 flex justify-between items-start gap-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs text-amber-600 font-semibold mb-1">Revize 1</p>
+                    <p class="text-sm text-amber-700 break-words">${machine.makine_revizesi}</p>
+                  </div>
+                  <div class="flex gap-1 flex-shrink-0">
+                    <button onclick="openEditIssueModal('${id}', 'revision', 0, '${machine.makine_revizesi.replace(/'/g, "\\'")}')" class="text-blue-400 hover:text-blue-600 transition-colors p-1" title="Düzenle">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </button>
+                    <button onclick="openDeleteIssueModal('${id}', 'revision', 0, '${machine.makine_revizesi.replace(/'/g, "\\'")}')" class="text-amber-400 hover:text-amber-600 transition-colors p-1" title="Sil">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+          } else {
+            revisionContainer.innerHTML = '';
+          }
+          
+          existingCards.delete(id);
+        } else {
+          const card = document.createElement('div');
+          card.dataset.machineId = id;
+          card.className = 'machine-card glass-card rounded-2xl p-6 shadow-xl';
+          card.style.animationDelay = `${index * 0.1}s`;
+          
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h3 class="font-bold text-gray-800 text-lg">${machine.makine_modeli}</h3>
+                <p class="text-gray-500 text-sm">${machine.seri_numarasi}</p>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="openEditMachineModal('${id}')" class="text-gray-400 hover:text-blue-500 transition-colors p-1" title="Düzenle">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button onclick="openMachinePasswordModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="Sil">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-xl p-4 mb-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">�����</span>
+                  <div>
+                    <p class="text-xs text-gray-500">Sipariş Firma</p>
+                    <p class="font-semibold text-gray-700">${machine.siparis_firma}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-indigo-50 rounded-xl p-3 text-center">
+                <p class="text-xs text-indigo-600 mb-1">Başlangıç</p>
+                <p class="font-semibold text-indigo-800 text-sm">${olusturmaTarihi.toLocaleDateString('tr-TR')}</p>
+              </div>
+              <div class="bg-rose-50 rounded-xl p-3 text-center">
+                <p class="text-xs text-rose-600 mb-1">Bitiş</p>
+                <p class="font-semibold text-rose-800 text-sm">${bitisTarihi.toLocaleDateString('tr-TR')}</p>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r ${countdown.expired ? 'from-red-100 to-red-50' : 'from-emerald-100 to-teal-50'} rounded-xl p-4 text-center mb-4">
+              <p class="text-xs ${countdown.expired ? 'text-red-600' : 'text-emerald-600'} mb-1">⏱️ Kalan Süre</p>
+              <p class="countdown-display font-bold text-2xl ${countdown.expired || countdown.urgent ? 'text-red-600 countdown-urgent' : 'text-emerald-600'}">
+                ${countdown.text}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <button onclick="openIssueModal('${id}', 'error')" class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2">
+                <span>⚠️</span> Hata Ekle
+              </button>
+              <button onclick="openIssueModal('${id}', 'revision')" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2">
+                <span>🔧</span> Revize Ekle
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="error-section space-y-2"></div>
+              <div class="revision-section space-y-2"></div>
+            </div>
+          `;
+          
+          container.appendChild(card);
+        }
+        
+        if (countdownIntervals[id]) clearInterval(countdownIntervals[id]);
+        
+        countdownIntervals[id] = setInterval(() => {
+          const card = document.querySelector(`[data-machine-id="${id}"]`);
+          if (card) {
+            const countdownEl = card.querySelector('.countdown-display');
+            const newCountdown = calculateCountdown(machine.bitis_tarihi);
+            if (countdownEl) {
+              countdownEl.textContent = newCountdown.text;
+              countdownEl.classList.toggle('countdown-urgent', newCountdown.urgent);
+              countdownEl.classList.toggle('text-red-600', newCountdown.expired || newCountdown.urgent);
+              countdownEl.classList.toggle('text-emerald-600', !newCountdown.expired && !newCountdown.urgent);
+            }
+          }
+        }, 1000);
+      });
+      
+      existingCards.forEach(card => card.remove());
+    }
+    
+    // Form submissions
+    async function handleTaskSubmit(event) {
+      event.preventDefault();
+      
+      if (!currentTaskPerson) return;
+      if (allTasks.length >= 999) {
+        showToast('Maksimum 999 görev kaydı!', 'error');
+        return;
+      }
+      
+      const gorevTanimlamasi = document.getElementById('gorev-tanimlamasi').value;
+      const bitisTarih = document.getElementById('task-bitis-tarih').value;
+      const bitisSaat = document.getElementById('task-bitis-saat').value;
+      const bitisTarihi = new Date(`${bitisTarih}T${bitisSaat}`).toISOString();
+      
+      const btn = document.getElementById('task-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Ekleniyor...';
+      
+      const result = await window.dataSdk.create({
+        kisi_adi: currentTaskPerson,
+        gorev_tanimlamasi: gorevTanimlamasi,
+        gorev_bitis_tarihi: bitisTarihi,
+        gorev_tamamlandi: false,
+        gorev_mazereti: '',
+        seri_numarasi: '',
+        makine_modeli: '',
+        siparis_firma: '',
+        bitis_tarihi: '',
+        olusturma_tarihi: new Date().toISOString()
+      });
+      
+      btn.disabled = false;
+      btn.textContent = 'Tamam';
+      
+      if (result.isOk) {
+        closeTaskModal();
+        showToast('Görev eklendi!');
+      } else {
+        showToast('Hata!', 'error');
+      }
+    }
+    
+    async function handleMachineSubmit(event) {
+      event.preventDefault();
+      
+      if (machines.length >= 999) {
+        showToast('Maksimum 999 makine kaydı!', 'error');
+        return;
+      }
+      
+      const seri = document.getElementById('seri').value;
+      const model = document.getElementById('model').value;
+      const firma = document.getElementById('firma').value;
+      const bitisTarih = document.getElementById('bitis-tarih').value;
+      const bitisSaat = document.getElementById('bitis-saat').value;
+      const bitisTarihi = new Date(`${bitisTarih}T${bitisSaat}`).toISOString();
+      
+      const btn = document.getElementById('machine-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Ekleniyor...';
+      
+      const result = await window.dataSdk.create({
+        seri_numarasi: seri,
+        makine_modeli: model,
+        siparis_firma: firma,
+        bitis_tarihi: bitisTarihi,
+        olusturma_tarihi: new Date().toISOString(),
+        makine_hatasi: '',
+        makine_revizesi: '',
+        kisi_adi: '',
+        gorev_tanimlamasi: '',
+        gorev_bitis_tarihi: '',
+        gorev_tamamlandi: false,
+        gorev_mazereti: ''
+      });
+      
+      btn.disabled = false;
+      btn.textContent = 'Tamam';
+      
+      if (result.isOk) {
+        closeMachineModal();
+        showToast('Makine eklendi!');
+      } else {
+        showToast('Hata!', 'error');
+      }
+    }
+    
+    // Data handler
+    const dataHandler = {
+      onDataChanged(data) {
+        allTasks = data;
+        machines = data.filter(d => d.seri_numarasi && d.makine_modeli);
+        renderAllTasks();
+        renderMachines();
+      }
+    };
+    
+    // SDK initialization
+    async function init() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error('Data SDK initialization failed');
+        }
+      }
+    }
+    
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c9165ef67c8db87',t:'MTc3MDI4MzkyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
