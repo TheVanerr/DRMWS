@@ -7,6 +7,41 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="/_sdk/data_sdk.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTYYB7nfFwwlBFaZ67pjPcv2yrOVk511I",
+      authDomain: "drmws-78227.firebaseapp.com",
+      projectId: "drmws-78227",
+      storageBucket: "drmws-78227.firebasestorage.app",
+      messagingSenderId: "68627643543",
+      appId: "1:68627643543:web:dbbd6388c144d169a3bdd2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Global olarak erişilebilir hale getir
+    window.firebaseDB = {
+      db,
+      collection,
+      addDoc,
+      getDocs,
+      updateDoc,
+      deleteDoc,
+      doc,
+      query,
+      orderBy,
+      where
+    };
+
+    console.log('Firebase initialized successfully!');
+  </script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
     body {
@@ -89,8 +124,16 @@
  </head>
  <body class="h-full gradient-bg">
   <div id="app" class="h-full flex flex-col overflow-auto"><!-- Header -->
-   <header class="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4">
-    <h1 id="site-title" class="text-2xl font-bold text-white text-center">Görev Dağılımı Sistemi</h1>
+   <header class="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4 flex justify-between items-center">
+    <h1 id="site-title" class="text-2xl font-bold text-white">Görev Dağılımı Sistemi</h1>
+    <button onclick="openLoginModal()" id="login-btn" class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg">
+     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+     Giriş Yap
+    </button>
+    <button onclick="logout()" id="logout-btn" class="hidden px-6 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg">
+     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+     <span id="username-display"></span>
+    </button>
    </header><!-- Navigation -->
    <nav class="bg-white/5 backdrop-blur-sm px-4 py-3">
     <div class="flex flex-wrap justify-center gap-2"><button onclick="showPage('giris')" class="nav-item active px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="giris"> 🏠 Giriş </button> <button onclick="showPage('montaj')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="montaj"> 🔧 Montaj </button> <button onclick="showPage('kaynak')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="kaynak"> ⚡ Kaynak </button> <button onclick="showPage('idare')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="idare"> 📋 İdare </button> <button onclick="showPage('yonetim')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="yonetim"> 👔 Yönetim </button> <button onclick="showPage('makine')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="makine"> ��️ Makine </button>
@@ -171,52 +214,52 @@
         <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          T
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">TheVaner</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Fatih GÜRAL</h3>
         <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('TheVaner')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Fatih GÜRAL')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="TheVaner"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Fatih GÜRAL"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
         <div class="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          D
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">Dogi</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Doğan AÇIKEL</h3>
         <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('Dogi')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Doğan AÇIKEL')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> G��rev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="Dogi"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Doğan AÇIKEL"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
         <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          Y
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">Yakub</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Yakup ŞAHİN</h3>
         <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('Yakub')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Yakup ŞAHİN')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="Yakub"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Yakup ŞAHİN"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.4s">
         <div class="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          H
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">HakGül</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Hakan GÜL</h3>
         <p class="text-indigo-600 text-sm mt-1">Montaj Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('HakGül')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Hakan GÜL')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
@@ -232,42 +275,42 @@
         <div class="w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          S
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">SüleymanÇ</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Süleyman ÇINAR</h3>
         <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('SüleymanÇ')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Süleyman ÇINAR')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="SüleymanÇ"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Süleyman ÇINAR"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
         <div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          M
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">MehmetY</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Mehmet YILDIZ</h3>
         <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('MehmetY')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Mehmet YILDIZ')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="MehmetY"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Mehmet YILDIZ"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
         <div class="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          H
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">HakGül</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Hakan GÜL</h3>
         <p class="text-amber-600 text-sm mt-1">Kaynak Uzmanı</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('HakGül')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Hakan GÜL')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="HakGül"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Hakan GÜL"></div>
       </div>
      </div>
     </div><!-- İdare Page -->
@@ -279,42 +322,42 @@
         <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          F
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">FettahCan</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Fettah GÜL</h3>
         <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('FettahCan')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Fettah GÜL')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="FettahCan"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Fettah GÜL"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
         <div class="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          E
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">ElfGök</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Elif GÖKMEN</h3>
         <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('ElfGök')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Elif GÖKMEN')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="ElfGök"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Elif GÖKMEN"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
         <div class="w-20 h-20 bg-gradient-to-br from-lime-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          A
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">AhmetYk</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Ahmet YÜKSEL</h3>
         <p class="text-emerald-600 text-sm mt-1">İdare Sorumlusu</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('AhmetYk')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Ahmet YÜKSEL')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="AhmetYk"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Ahmet YÜKSEL"></div>
       </div>
      </div>
     </div><!-- Yönetim Page -->
@@ -326,56 +369,56 @@
         <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          T
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">TheVaner</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Fatih GÜRAL</h3>
         <p class="text-purple-600 text-sm mt-1">Yönetici</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">Lider</span>
-        </div><button onclick="openTaskModal('TheVaner')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Fatih GÜRAL')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> G��rev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="TheVaner"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Fatih GÜRAL"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.2s">
         <div class="w-20 h-20 bg-gradient-to-br from-violet-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          F
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">FurkB</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Furkan BIÇAK</h3>
         <p class="text-purple-600 text-sm mt-1">Yönetici</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('FurkB')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Furkan BIÇAK')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="FurkB"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Furkan BIÇAK"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.3s">
         <div class="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          P
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">PINC</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Pınar ÇİNİCİ</h3>
         <p class="text-purple-600 text-sm mt-1">Yönetici</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('PINC')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Pınar ÇİNİCİ')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="PINC"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Pınar ÇİNİCİ"></div>
       </div>
       <div class="person-container">
        <div class="person-card glass-card rounded-2xl p-6 text-center" style="animation-delay: 0.4s">
         <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl text-white shadow-lg">
          T
         </div>
-        <h3 class="font-bold text-gray-800 text-lg">TUNC</h3>
+        <h3 class="font-bold text-gray-800 text-lg">Tuncay ÇİNİCİ</h3>
         <p class="text-purple-600 text-sm mt-1">Yönetici</p>
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
-        </div><button onclick="openTaskModal('TUNC')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
+        </div><button onclick="openTaskModal('Tuncay ÇİNİCİ')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
          </svg> Görev Ekle </button>
        </div>
-       <div class="tasks-container mt-4 space-y-3" data-person="TUNC"></div>
+       <div class="tasks-container mt-4 space-y-3" data-person="Tuncay ÇİNİCİ"></div>
       </div>
      </div>
     </div><!-- Makine Page -->
@@ -515,6 +558,53 @@
       </div>
      </div>
     </div>
+   </div><!-- Task Delete Password Modal -->
+   <div id="task-delete-password-modal" class="fixed inset-0 hidden z-50">
+    <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeTaskDeletePasswordModal()"></div>
+    <div class="relative flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-8 w-full max-w-md shadow-2xl relative"><button onclick="closeTaskDeletePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span class="bg-red-100 text-red-600 p-2 rounded-xl">🔐</span> Görevi Sil</h3>
+      <form id="task-delete-password-form" onsubmit="handleTaskDeletePasswordSubmit(event)" class="space-y-5">
+       <div><label for="task-delete-password" class="block text-sm font-medium text-gray-700 mb-2"> Şifre: 112263 </label> <input type="password" id="task-delete-password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" placeholder="Şifreyi girin...">
+        <div id="task-password-error" class="text-red-500 text-sm mt-2 hidden">
+         Şifre yanlış!
+        </div>
+       </div>
+       <div class="flex gap-3 pt-4"><button type="button" onclick="closeTaskDeletePasswordModal()" class="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-all"> İptal </button> <button type="submit" id="task-delete-password-submit-btn" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-xl font-semibold shadow-lg transition-all"> Sil </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Login Page -->
+   <div id="login-page" class="fixed inset-0 z-50 gradient-bg hidden">
+    <div class="flex items-center justify-center min-h-full p-4">
+     <div class="glass-card rounded-3xl p-10 w-full max-w-md shadow-2xl">
+      <div class="text-center mb-10">
+       <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl text-white shadow-2xl animate-pulse">
+        🔐
+       </div>
+       <h3 class="text-4xl font-bold text-gray-800 mb-2">Görev Dağılımı Sistemi</h3>
+       <p class="text-gray-600 text-lg">Devam etmek için giriş yapın</p>
+      </div>
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-6">
+       <div><label for="username" class="block text-sm font-semibold text-gray-700 mb-2"> Kullanıcı Adı </label> <input type="text" id="username" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Kullanıcı adınızı girin..." autofocus>
+       </div>
+       <div><label for="password" class="block text-sm font-semibold text-gray-700 mb-2"> Şifre </label> <input type="password" id="password" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Şifrenizi girin...">
+        <div id="login-error" class="text-red-500 text-sm mt-2 hidden font-medium">
+         ❌ Kullanıcı adı veya şifre yanlış!
+        </div>
+       </div>
+       <button type="submit" id="login-submit-btn" class="w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl"> 
+        <span class="flex items-center justify-center gap-2">
+         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+         Giriş Yap
+        </span>
+       </button>
+      </form>
+     </div>
+    </div>
    </div><!-- Machine Password Modal -->
    <div id="machine-password-modal" class="fixed inset-0 hidden z-50">
     <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeMachinePasswordModal()"></div>
@@ -577,6 +667,72 @@
     let currentMazeretTaskId = null;
     let currentIssueId = null;
     let currentIssueType = null;
+    let currentDeleteTaskId = null;
+    let isLoggedIn = false;
+    let currentUser = null;
+    
+    // Authentication functions
+    function checkAuth() {
+      const savedUser = localStorage.getItem('loggedInUser');
+      if (savedUser) {
+        isLoggedIn = true;
+        currentUser = savedUser;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('login-btn').classList.add('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        document.getElementById('username-display').textContent = currentUser;
+      } else {
+        isLoggedIn = false;
+        document.getElementById('login-btn').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+      }
+    }
+    
+    function openLoginModal() {
+      document.getElementById('login-page').classList.remove('hidden');
+    }
+    
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      if (username === 'FATIHGR' && password === '997522') {
+        isLoggedIn = true;
+        currentUser = username;
+        localStorage.setItem('loggedInUser', username);
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('login-btn').classList.add('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        document.getElementById('username-display').textContent = username;
+        document.getElementById('login-error').classList.add('hidden');
+        showToast('Hoş geldiniz, ' + username + '!', 'success');
+        
+        // Verileri yükle
+        await loadAllData();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+    
+    function logout() {
+      isLoggedIn = false;
+      currentUser = null;
+      localStorage.removeItem('loggedInUser');
+      document.getElementById('login-btn').classList.remove('hidden');
+      document.getElementById('logout-btn').classList.add('hidden');
+      showToast('Çıkış yapıldı');
+    }
+    
+    function requireAuth() {
+      if (!isLoggedIn) {
+        showToast('Bu işlem için giriş yapmalısınız!', 'error');
+        openLoginModal();
+        return false;
+      }
+      return true;
+    }
     
     // Play sound for issue
     function playIssueSound() {
@@ -605,6 +761,7 @@
     
     // Task Modal
     function openTaskModal(personName) {
+      if (!requireAuth()) return;
       currentTaskPerson = personName;
       document.getElementById('task-modal-title').innerHTML = `<span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✓</span> ${personName} - Görev Ekle`;
       document.getElementById('task-modal').classList.remove('hidden');
@@ -623,6 +780,7 @@
     
     // Machine Modal
     function openMachineModal() {
+      if (!requireAuth()) return;
       document.getElementById('machine-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       
@@ -638,6 +796,7 @@
     
     // Mazeret Modal
     function openMazeretModal(taskId) {
+      if (!requireAuth()) return;
       currentMazeretTaskId = taskId;
       document.getElementById('mazeret-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -659,7 +818,7 @@
         return;
       }
       
-      const task = allTasks.find(t => t.__backendId === currentMazeretTaskId);
+      const task = allTasks.find(t => t.id === currentMazeretTaskId);
       if (!task) {
         closeMazeretModal();
         return;
@@ -669,8 +828,7 @@
       btn.disabled = true;
       btn.textContent = 'Kaydediliyor...';
       
-      const result = await window.dataSdk.update({
-        ...task,
+      const result = await window.firebaseOps.updateRecord(task.id, {
         gorev_mazereti: mazeret
       });
       
@@ -680,6 +838,7 @@
       if (result.isOk) {
         closeMazeretModal();
         showToast('Mazeret kaydedildi!');
+        await loadAllData();
       } else {
         showToast('Hata olu��tu!', 'error');
       }
@@ -687,6 +846,7 @@
     
     // Issue Modal
     function openIssueModal(machineId, issueType) {
+      if (!requireAuth()) return;
       currentIssueId = machineId;
       currentIssueType = issueType;
       
@@ -730,7 +890,7 @@
         return;
       }
       
-      const machine = machines.find(m => m.__backendId === currentIssueId);
+      const machine = machines.find(m => m.id === currentIssueId);
       if (!machine) {
         closeIssueModal();
         return;
@@ -762,7 +922,7 @@
         }
       }
       
-      const result = await window.dataSdk.update(updateData);
+      const result = await window.firebaseOps.updateRecord(machine.id, updateData);
       
       btn.disabled = false;
       btn.textContent = 'Kaydet';
@@ -770,6 +930,7 @@
       if (result.isOk) {
         closeIssueModal();
         showToast('Detay kaydedildi!');
+        await loadAllData();
       } else {
         showToast('Hata oluştu!', 'error');
       }
@@ -806,6 +967,7 @@
     let editIssueData = null;
     
     function openEditIssueModal(machineId, issueType, index, content) {
+      if (!requireAuth()) return;
       editIssueData = { machineId, issueType, index, oldContent: content };
       
       const title = issueType === 'error' ? 'Hata Düzenle' : 'Revize Düzenle';
@@ -845,7 +1007,7 @@
         return;
       }
       
-      const machine = machines.find(m => m.__backendId === machineId);
+      const machine = machines.find(m => m.id === machineId);
       if (!machine) {
         closeEditIssueModal();
         return;
@@ -883,7 +1045,7 @@
         }
       }
       
-      const result = await window.dataSdk.update(updateData);
+      const result = await window.firebaseOps.updateRecord(machine.id, updateData);
       
       btn.disabled = false;
       btn.textContent = 'Kaydet';
@@ -891,6 +1053,7 @@
       if (result.isOk) {
         closeEditIssueModal();
         showToast('Detay güncellendi!');
+        await loadAllData();
       } else {
         showToast('Hata oluştu!', 'error');
       }
@@ -901,10 +1064,66 @@
       document.getElementById('delete-modal').classList.add('hidden');
     }
     
+    // Task Delete Password Modal
+    function openTaskDeletePasswordModal(taskId) {
+      if (!requireAuth()) return;
+      currentDeleteTaskId = taskId;
+      document.getElementById('task-delete-password-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('task-password-error').classList.add('hidden');
+    }
+    
+    function closeTaskDeletePasswordModal() {
+      document.getElementById('task-delete-password-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      document.getElementById('task-delete-password-form').reset();
+      document.getElementById('task-password-error').classList.add('hidden');
+      currentDeleteTaskId = null;
+    }
+    
+    async function handleTaskDeletePasswordSubmit(event) {
+      event.preventDefault();
+      
+      const password = document.getElementById('task-delete-password').value;
+      
+      if (password !== '112263') {
+        document.getElementById('task-password-error').classList.remove('hidden');
+        return;
+      }
+      
+      if (!currentDeleteTaskId) {
+        closeTaskDeletePasswordModal();
+        return;
+      }
+      
+      const task = allTasks.find(t => t.id === currentDeleteTaskId);
+      if (!task) {
+        closeTaskDeletePasswordModal();
+        return;
+      }
+      
+      const btn = document.getElementById('task-delete-password-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Siliniyor...';
+      
+      const result = await window.firebaseOps.deleteRecord(task.id);
+      
+      btn.disabled = false;
+      btn.textContent = 'Sil';
+      
+      if (result.isOk) {
+        closeTaskDeletePasswordModal();
+        showToast('Görev silindi!');
+        await loadAllData();
+      } else {
+        showToast('Silme işlemi başarısız oldu!', 'error');
+      }
+    }
+    
     async function confirmDelete() {
       if (!deleteTargetId) return;
       
-      const task = allTasks.find(t => t.__backendId === deleteTargetId);
+      const task = allTasks.find(t => t.id === deleteTargetId);
       if (!task) {
         closeDeleteModal();
         return;
@@ -914,12 +1133,15 @@
       btn.disabled = true;
       btn.textContent = 'Siliniyor...';
       
-      const result = await window.dataSdk.delete(task);
+      const result = await window.firebaseOps.deleteRecord(task.id);
       
       btn.disabled = false;
       btn.textContent = 'Sil';
       
-      if (!result.isOk) {
+      if (result.isOk) {
+        showToast('Görev silindi!');
+        await loadAllData();
+      } else {
         showToast('Silme işlemi başarısız oldu!', 'error');
       }
       
@@ -939,56 +1161,60 @@
     }
     
     async function removeError(machineId, index) {
-      const machine = machines.find(m => m.__backendId === machineId);
+      const machine = machines.find(m => m.id === machineId);
       if (!machine) return;
       
       try {
         const errors = JSON.parse(machine.makine_hatasi || '[]');
         errors.splice(index, 1);
         
-        const result = await window.dataSdk.update({
-          ...machine,
+        const result = await window.firebaseOps.updateRecord(machine.id, {
           makine_hatasi: JSON.stringify(errors)
         });
         
-        if (!result.isOk) {
+        if (result.isOk) {
+          await loadAllData();
+        } else {
           showToast('Silme işlemi başarısız!', 'error');
         }
       } catch (e) {
-        const result = await window.dataSdk.update({
-          ...machine,
+        const result = await window.firebaseOps.updateRecord(machine.id, {
           makine_hatasi: ''
         });
         
-        if (!result.isOk) {
+        if (result.isOk) {
+          await loadAllData();
+        } else {
           showToast('Silme işlemi başarısız!', 'error');
         }
       }
     }
     
     async function removeRevision(machineId, index) {
-      const machine = machines.find(m => m.__backendId === machineId);
+      const machine = machines.find(m => m.id === machineId);
       if (!machine) return;
       
       try {
         const revisions = JSON.parse(machine.makine_revizesi || '[]');
         revisions.splice(index, 1);
         
-        const result = await window.dataSdk.update({
-          ...machine,
+        const result = await window.firebaseOps.updateRecord(machine.id, {
           makine_revizesi: JSON.stringify(revisions)
         });
         
-        if (!result.isOk) {
+        if (result.isOk) {
+          await loadAllData();
+        } else {
           showToast('Silme işlemi başarısız!', 'error');
         }
       } catch (e) {
-        const result = await window.dataSdk.update({
-          ...machine,
+        const result = await window.firebaseOps.updateRecord(machine.id, {
           makine_revizesi: ''
         });
         
-        if (!result.isOk) {
+        if (result.isOk) {
+          await loadAllData();
+        } else {
           showToast('Silme işlemi ba����arısız!', 'error');
         }
       }
@@ -999,6 +1225,7 @@
     
     // Machine Password Modal
     function openMachinePasswordModal(machineId) {
+      if (!requireAuth()) return;
       currentDeleteMachineId = machineId;
       document.getElementById('machine-password-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -1033,7 +1260,7 @@
         return;
       }
       
-      const machine = machines.find(m => m.__backendId === currentDeleteMachineId);
+      const machine = machines.find(m => m.id === currentDeleteMachineId);
       if (!machine) {
         closeMachinePasswordModal();
         return;
@@ -1043,7 +1270,7 @@
       btn.disabled = true;
       btn.textContent = 'Siliniyor...';
       
-      const result = await window.dataSdk.delete(machine);
+      const result = await window.firebaseOps.deleteRecord(machine.id);
       
       btn.disabled = false;
       btn.textContent = 'Sil';
@@ -1051,6 +1278,7 @@
       if (result.isOk) {
         closeMachinePasswordModal();
         showToast('Makine silindi!');
+        await loadAllData();
       } else {
         showToast('Silme işlemi başarısız oldu!', 'error');
       }
@@ -1058,8 +1286,9 @@
     
     // Edit Machine Modal
     function openEditMachineModal(machineId) {
+      if (!requireAuth()) return;
       currentEditMachineId = machineId;
-      const machine = machines.find(m => m.__backendId === machineId);
+      const machine = machines.find(m => m.id === machineId);
       if (!machine) return;
       
       const bitisTarihi = new Date(machine.bitis_tarihi);
@@ -1088,7 +1317,7 @@
       
       if (!currentEditMachineId) return;
       
-      const machine = machines.find(m => m.__backendId === currentEditMachineId);
+      const machine = machines.find(m => m.id === currentEditMachineId);
       if (!machine) {
         closeEditMachineModal();
         return;
@@ -1105,8 +1334,7 @@
       btn.disabled = true;
       btn.textContent = 'Kaydediliyor...';
       
-      const result = await window.dataSdk.update({
-        ...machine,
+      const result = await window.firebaseOps.updateRecord(machine.id, {
         seri_numarasi: seri,
         makine_modeli: model,
         siparis_firma: firma,
@@ -1119,6 +1347,7 @@
       if (result.isOk) {
         closeEditMachineModal();
         showToast('Makine güncellendi!');
+        await loadAllData();
       } else {
         showToast('Hata!', 'error');
       }
@@ -1148,15 +1377,15 @@
     
     // Complete task
     async function completeTask(taskId) {
-      const task = allTasks.find(t => t.__backendId === taskId);
+      if (!requireAuth()) return;
+      const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
       
       const btn = event.target;
       btn.disabled = true;
       btn.textContent = 'Kaydediliyor...';
       
-      const result = await window.dataSdk.update({
-        ...task,
+      const result = await window.firebaseOps.updateRecord(task.id, {
         gorev_tamamlandi: true
       });
       
@@ -1165,6 +1394,7 @@
       
       if (result.isOk) {
         showToast('Görev tamamlandı!');
+        await loadAllData();
       } else {
         showToast('Hata oluştu!', 'error');
       }
@@ -1183,7 +1413,7 @@
       });
       
       personTasks.forEach((task, index) => {
-        const id = task.__backendId;
+        const id = task.id;
         const countdown = calculateCountdown(task.gorev_bitis_tarihi);
         const bitisTarihi = new Date(task.gorev_bitis_tarihi);
         const isCompleted = task.gorev_tamamlandi;
@@ -1237,7 +1467,7 @@
                 <h4 class="font-semibold text-gray-800 text-sm mb-1">📝 Görev</h4>
                 <p class="text-gray-600 text-sm line-clamp-2">${task.gorev_tanimlamasi}</p>
               </div>
-              <button onclick="openDeleteModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2 flex-shrink-0">
+              <button onclick="openTaskDeletePasswordModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2 flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -1301,10 +1531,10 @@
     
     function renderAllTasks() {
       const people = [
-        'TheVaner', 'Dogi', 'Yakub', 'HakGül',
-        'SüleymanÇ', 'MehmetY',
-        'FettahCan', 'ElfGök', 'AhmetYk',
-        'FurkB', 'PINC', 'TUNC'
+        'Fatih GÜRAL', 'Doğan AÇIKEL', 'Yakup ŞAHİN', 'Hakan GÜL',
+        'Süleyman ÇINAR', 'Mehmet YILDIZ',
+        'Fettah GÜL', 'Elif GÖKMEN', 'Ahmet YÜKSEL',
+        'Furkan BIÇAK', 'Pınar ÇİNİCİ', 'Tuncay ÇİNİCİ'
       ];
       
       people.forEach(person => renderTasksForPerson(person));
@@ -1334,7 +1564,7 @@
       });
       
       machineData.forEach((machine, index) => {
-        const id = machine.__backendId;
+        const id = machine.id;
         const countdown = calculateCountdown(machine.bitis_tarihi);
         const bitisTarihi = new Date(machine.bitis_tarihi);
         const olusturmaTarihi = new Date(machine.olusturma_tarihi);
@@ -1573,7 +1803,7 @@
       btn.disabled = true;
       btn.textContent = 'Ekleniyor...';
       
-      const result = await window.dataSdk.create({
+      const result = await window.firebaseOps.createRecord({
         kisi_adi: currentTaskPerson,
         gorev_tanimlamasi: gorevTanimlamasi,
         gorev_bitis_tarihi: bitisTarihi,
@@ -1583,7 +1813,8 @@
         makine_modeli: '',
         siparis_firma: '',
         bitis_tarihi: '',
-        olusturma_tarihi: new Date().toISOString()
+        olusturma_tarihi: new Date().toISOString(),
+        type: 'task'
       });
       
       btn.disabled = false;
@@ -1592,6 +1823,7 @@
       if (result.isOk) {
         closeTaskModal();
         showToast('Görev eklendi!');
+        await loadAllData(); // Verileri yeniden yükle
       } else {
         showToast('Hata!', 'error');
       }
@@ -1616,7 +1848,7 @@
       btn.disabled = true;
       btn.textContent = 'Ekleniyor...';
       
-      const result = await window.dataSdk.create({
+      const result = await window.firebaseOps.createRecord({
         seri_numarasi: seri,
         makine_modeli: model,
         siparis_firma: firma,
@@ -1628,7 +1860,8 @@
         gorev_tanimlamasi: '',
         gorev_bitis_tarihi: '',
         gorev_tamamlandi: false,
-        gorev_mazereti: ''
+        gorev_mazereti: '',
+        type: 'machine'
       });
       
       btn.disabled = false;
@@ -1637,6 +1870,7 @@
       if (result.isOk) {
         closeMachineModal();
         showToast('Makine eklendi!');
+        await loadAllData(); // Verileri yeniden yükle
       } else {
         showToast('Hata!', 'error');
       }
@@ -1644,16 +1878,124 @@
     
     // Data handler
     const dataHandler = {
-      onDataChanged(data) {
+      async onDataChanged(data) {
         allTasks = data;
-        machines = data.filter(d => d.seri_numarasi && d.makine_modeli);
+        machines = data.filter(d => d.type === 'machine' || (d.seri_numarasi && d.makine_modeli));
         renderAllTasks();
         renderMachines();
       }
     };
     
+    // Firebase'den verileri yükle ve güncelle
+    async function loadAllData() {
+      const result = await window.firebaseOps.getAllRecords();
+      if (result.isOk) {
+        dataHandler.onDataChanged(result.data);
+      }
+    }
+    
+    // Firebase CRUD Operations
+    const firebaseOperations = {
+      // Yeni kayıt ekleme
+      async createRecord(data) {
+        try {
+          const { db, collection, addDoc } = window.firebaseDB;
+          const docRef = await addDoc(collection(db, 'kalite-kayitlari'), {
+            ...data,
+            createdAt: new Date().toISOString()
+          });
+          console.log('Document created with ID:', docRef.id);
+          return { isOk: true, data: { id: docRef.id, ...data } };
+        } catch (error) {
+          console.error('Error creating document:', error);
+          return { isOk: false, error: error.message };
+        }
+      },
+
+      // Tüm kayıtları getirme
+      async getAllRecords() {
+        try {
+          const { db, collection, getDocs, query, orderBy } = window.firebaseDB;
+          const q = query(collection(db, 'kalite-kayitlari'), orderBy('createdAt', 'desc'));
+          const querySnapshot = await getDocs(q);
+          const records = [];
+          querySnapshot.forEach((doc) => {
+            records.push({ id: doc.id, ...doc.data() });
+          });
+          console.log('Retrieved', records.length, 'records');
+          return { isOk: true, data: records };
+        } catch (error) {
+          console.error('Error getting documents:', error);
+          return { isOk: false, error: error.message };
+        }
+      },
+
+      // Belirli bir kaydı güncelleme
+      async updateRecord(id, data) {
+        try {
+          const { db, doc, updateDoc } = window.firebaseDB;
+          const docRef = doc(db, 'kalite-kayitlari', id);
+          await updateDoc(docRef, {
+            ...data,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('Document updated:', id);
+          return { isOk: true, data: { id, ...data } };
+        } catch (error) {
+          console.error('Error updating document:', error);
+          return { isOk: false, error: error.message };
+        }
+      },
+
+      // Kayıt silme
+      async deleteRecord(id) {
+        try {
+          const { db, doc, deleteDoc } = window.firebaseDB;
+          const docRef = doc(db, 'kalite-kayitlari', id);
+          await deleteDoc(docRef);
+          console.log('Document deleted:', id);
+          return { isOk: true };
+        } catch (error) {
+          console.error('Error deleting document:', error);
+          return { isOk: false, error: error.message };
+        }
+      },
+
+      // Filtreli kayıtları getirme
+      async getFilteredRecords(field, operator, value) {
+        try {
+          const { db, collection, getDocs, query, where } = window.firebaseDB;
+          const q = query(collection(db, 'kalite-kayitlari'), where(field, operator, value));
+          const querySnapshot = await getDocs(q);
+          const records = [];
+          querySnapshot.forEach((doc) => {
+            records.push({ id: doc.id, ...doc.data() });
+          });
+          console.log('Retrieved', records.length, 'filtered records');
+          return { isOk: true, data: records };
+        } catch (error) {
+          console.error('Error getting filtered documents:', error);
+          return { isOk: false, error: error.message };
+        }
+      }
+    };
+
+    // Global olarak erişilebilir hale getir
+    window.firebaseOps = firebaseOperations;
+    
     // SDK initialization
     async function init() {
+      // Check authentication first
+      checkAuth();
+      
+      // Firebase bağlantısını test et ve verileri yükle
+      if (window.firebaseDB) {
+        console.log('Firebase connection ready!');
+        if (isLoggedIn) {
+          await loadAllData(); // Tüm verileri yükle
+        }
+      }
+      
       if (window.dataSdk) {
         const result = await window.dataSdk.init(dataHandler);
         if (!result.isOk) {
