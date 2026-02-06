@@ -223,7 +223,7 @@
         <div class="mt-4 flex justify-center gap-2 mb-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Aktif</span>
         </div><button onclick="openTaskModal('Doğan AÇIKEL')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-         </svg> G��rev Ekle </button>
+         </svg> Görev Ekle </button>
        </div>
        <div class="tasks-container mt-4 space-y-3" data-person="Doğan AÇIKEL"></div>
       </div>
@@ -656,6 +656,7 @@
     let countdownIntervals = {};
     let deleteTargetId = null;
     let currentTaskPerson = null;
+    let currentEditTaskId = null;
     let currentMazeretTaskId = null;
     let currentIssueId = null;
     let currentIssueType = null;
@@ -849,14 +850,32 @@
     }
     
     // Task Modal
-    function openTaskModal(personName) {
+    function openTaskModal(personName, taskId = null) {
       if (!requireAuth()) return;
       if (userRole === 'viewer' || userRole === 'machine-operator') {
         showToast('Bu işlem için yetkiniz yok!', 'error');
         return;
       }
+      
       currentTaskPerson = personName;
-      document.getElementById('task-modal-title').innerHTML = `<span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✓</span> ${personName} - Görev Ekle`;
+      currentEditTaskId = taskId;
+      
+      if (taskId) {
+        // Edit mode
+        const task = allTasks.find(t => t.id === taskId);
+        if (task) {
+          document.getElementById('task-modal-title').innerHTML = `<span class="bg-amber-100 text-amber-600 p-2 rounded-xl">✏️</span> ${personName} - Görev Düzenle`;
+          document.getElementById('gorev-tanimlamasi').value = task.gorev_tanimlamasi;
+          
+          const bitisTarihi = new Date(task.gorev_bitis_tarihi);
+          document.getElementById('task-bitis-tarih').value = bitisTarihi.toISOString().split('T')[0];
+          document.getElementById('task-bitis-saat').value = bitisTarihi.toTimeString().slice(0, 5);
+        }
+      } else {
+        // Add mode
+        document.getElementById('task-modal-title').innerHTML = `<span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✓</span> ${personName} - Görev Ekle`;
+      }
+      
       document.getElementById('task-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       
@@ -869,6 +888,7 @@
       document.body.style.overflow = '';
       document.getElementById('task-form').reset();
       currentTaskPerson = null;
+      currentEditTaskId = null;
     }
     
     // Machine Modal
@@ -1493,7 +1513,7 @@
     }
     
     // Complete task
-    async function completeTask(taskId) {
+    async function toggleTaskStatus(taskId) {
       if (!requireAuth()) return;
       if (userRole === 'viewer' || userRole === 'machine-operator') {
         showToast('Bu işlem için yetkiniz yok!', 'error');
@@ -1506,15 +1526,16 @@
       btn.disabled = true;
       btn.textContent = 'Kaydediliyor...';
       
+      const newStatus = !task.gorev_tamamlandi;
+      
       const result = await window.firebaseOps.updateRecord(task.id, {
-        gorev_tamamlandi: true
+        gorev_tamamlandi: newStatus
       });
       
       btn.disabled = false;
-      btn.textContent = '✓ Tamamlandı';
       
       if (result.isOk) {
-        showToast('Görev tamamlandı!');
+        showToast(newStatus ? 'Görev tamamlandı!' : 'Görev devam ediyor');
         await loadAllData();
       } else {
         showToast('Hata oluştu!', 'error');
@@ -1588,11 +1609,18 @@
                 <h4 class="font-semibold text-gray-800 text-sm mb-1">📝 Görev</h4>
                 <p class="text-gray-600 text-sm line-clamp-2">${task.gorev_tanimlamasi}</p>
               </div>
-              <button onclick="openTaskDeletePasswordModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2 flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
+              <div class="flex gap-1">
+                <button onclick="openTaskModal('${task.kisi_adi}', '${id}')" class="text-gray-400 hover:text-blue-500 transition-colors p-1 flex-shrink-0" title="Düzenle">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button onclick="openTaskDeletePasswordModal('${id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 flex-shrink-0" title="Sil">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div class="bg-blue-50 rounded-lg p-2 mb-3">
@@ -1603,16 +1631,16 @@
             </div>
             
             ${isCompleted ? `
-              <div class="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-center font-semibold text-sm">
-                ✓ Görev Tamamlandı
-              </div>
+              <button onclick="toggleTaskStatus('${id}')" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
+                ✓ Tamamlandı
+              </button>
             ` : countdown.expired ? `
               <button onclick="openMazeretModal('${id}')" class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
                 ⚠️ Mazeret Ekle
               </button>
             ` : `
-              <button onclick="completeTask('${id}')" class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
-                ✓ Tamamla
+              <button onclick="toggleTaskStatus('${id}')" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all">
+                🔄 Devam Ediyor
               </button>
             `}
             
@@ -1910,10 +1938,6 @@
       event.preventDefault();
       
       if (!currentTaskPerson) return;
-      if (allTasks.length >= 999) {
-        showToast('Maksimum 999 görev kaydı!', 'error');
-        return;
-      }
       
       const gorevTanimlamasi = document.getElementById('gorev-tanimlamasi').value;
       const bitisTarih = document.getElementById('task-bitis-tarih').value;
@@ -1922,31 +1946,60 @@
       
       const btn = document.getElementById('task-submit-btn');
       btn.disabled = true;
-      btn.textContent = 'Ekleniyor...';
       
-      const result = await window.firebaseOps.createRecord({
-        kisi_adi: currentTaskPerson,
-        gorev_tanimlamasi: gorevTanimlamasi,
-        gorev_bitis_tarihi: bitisTarihi,
-        gorev_tamamlandi: false,
-        gorev_mazereti: '',
-        seri_numarasi: '',
-        makine_modeli: '',
-        siparis_firma: '',
-        bitis_tarihi: '',
-        olusturma_tarihi: new Date().toISOString(),
-        type: 'task'
-      });
-      
-      btn.disabled = false;
-      btn.textContent = 'Tamam';
-      
-      if (result.isOk) {
-        closeTaskModal();
-        showToast('Görev eklendi!');
-        await loadAllData(); // Verileri yeniden yükle
+      if (currentEditTaskId) {
+        // Edit mode - update existing task
+        btn.textContent = 'Güncelleniyor...';
+        
+        const result = await window.firebaseOps.updateRecord(currentEditTaskId, {
+          gorev_tanimlamasi: gorevTanimlamasi,
+          gorev_bitis_tarihi: bitisTarihi
+        });
+        
+        btn.disabled = false;
+        btn.textContent = 'Tamam';
+        
+        if (result.isOk) {
+          closeTaskModal();
+          showToast('Görev güncellendi!');
+          await loadAllData();
+        } else {
+          showToast('Hata!', 'error');
+        }
       } else {
-        showToast('Hata!', 'error');
+        // Add mode - create new task
+        if (allTasks.length >= 999) {
+          showToast('Maksimum 999 görev kaydı!', 'error');
+          btn.disabled = false;
+          return;
+        }
+        
+        btn.textContent = 'Ekleniyor...';
+        
+        const result = await window.firebaseOps.createRecord({
+          kisi_adi: currentTaskPerson,
+          gorev_tanimlamasi: gorevTanimlamasi,
+          gorev_bitis_tarihi: bitisTarihi,
+          gorev_tamamlandi: false,
+          gorev_mazereti: '',
+          seri_numarasi: '',
+          makine_modeli: '',
+          siparis_firma: '',
+          bitis_tarihi: '',
+          olusturma_tarihi: new Date().toISOString(),
+          type: 'task'
+        });
+        
+        btn.disabled = false;
+        btn.textContent = 'Tamam';
+        
+        if (result.isOk) {
+          closeTaskModal();
+          showToast('Görev eklendi!');
+          await loadAllData(); // Verileri yeniden yükle
+        } else {
+          showToast('Hata!', 'error');
+        }
       }
     }
     
