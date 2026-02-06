@@ -744,15 +744,27 @@
     
     async function handleGoogleLogin() {
       try {
+        console.log('Starting Google login...');
         const { auth, provider, signInWithPopup } = window.firebaseAuth;
+        
+        if (!auth || !provider || !signInWithPopup) {
+          console.error('Firebase Auth not initialized');
+          showToast('Firebase Auth yüklenmedi. Sayfayı yenileyin.', 'error');
+          return;
+        }
+        
+        console.log('Opening Google sign-in popup...');
         const result = await signInWithPopup(auth, provider);
+        console.log('Sign-in successful:', result.user.email);
         const user = result.user;
         
         if (!allowedEmails.includes(user.email)) {
+          console.log('Unauthorized email:', user.email);
           await handleUnauthorizedUser();
           return;
         }
         
+        console.log('User authorized:', user.email);
         isLoggedIn = true;
         currentUser = user.displayName || user.email;
         firebaseUser = user;
@@ -770,7 +782,23 @@
         await loadAllData();
       } catch (error) {
         console.error('Google login error:', error);
-        showToast('Giriş yapılamadı!', 'error');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let errorMessage = 'Giriş yapılamadı!';
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = 'Giriş penceresi kapatıldı.';
+        } else if (error.code === 'auth/popup-blocked') {
+          errorMessage = 'Popup engellendi. Lütfen tarayıcı ayarlarınızı kontrol edin.';
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = 'Bu domain Firebase Console\'da yetkilendirilmemiş. Firebase Console > Authentication > Settings > Authorized domains bölümünden ekleyin.';
+        } else if (error.code === 'auth/operation-not-allowed') {
+          errorMessage = 'Google Sign-In Firebase Console\'da etkinleştirilmemiş. Firebase Console > Authentication > Sign-in method > Google > Enable yapın.';
+        }
+        
+        showToast(errorMessage, 'error');
+        document.getElementById('login-error').textContent = errorMessage;
         document.getElementById('login-error').classList.remove('hidden');
       }
     }
