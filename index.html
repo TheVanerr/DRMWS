@@ -5,22 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Görev Dağılımı Sistemi</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
   
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+    import { firebaseConfig } from './firebase-config-private.js';
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -136,7 +126,7 @@
     </button>
    </header><!-- Navigation -->
    <nav class="bg-white/5 backdrop-blur-sm px-4 py-3">
-    <div class="flex flex-wrap justify-center gap-2"><button onclick="showPage('giris')" class="nav-item active px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="giris"> 🏠 Giriş </button> <button onclick="showPage('montaj')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="montaj"> 🔧 Montaj </button> <button onclick="showPage('kaynak')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="kaynak"> ⚡ Kaynak </button> <button onclick="showPage('idare')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="idare"> 📋 İdare </button> <button onclick="showPage('yonetim')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="yonetim"> 👔 Yönetim </button> <button onclick="showPage('makine')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="makine"> ��️ Makine </button>
+    <div class="flex flex-wrap justify-center gap-2"><button onclick="showPage('giris')" class="nav-item active px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="giris"> 🏠 Giriş </button> <button onclick="showPage('montaj')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="montaj"> 🔧 Montaj </button> <button onclick="showPage('kaynak')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="kaynak"> ⚡ Kaynak </button> <button onclick="showPage('idare')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="idare"> 📋 İdare </button> <button onclick="showPage('yonetim')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="yonetim"> 👔 Yönetim </button> <button onclick="showPage('makine')" class="nav-item px-5 py-2.5 rounded-xl font-medium text-white/80 bg-white/10" data-page="makine"> 🏭 Makine </button>
     </div>
    </nav><!-- Main Content -->
    <main class="flex-1 p-6 overflow-auto"><!-- Giriş Page -->
@@ -194,7 +184,7 @@
        </div>
        <div class="bg-rose-50 rounded-2xl p-4 col-span-2 md:col-span-1">
         <div class="text-3xl mb-2">
-         ⚙️
+         🏭
         </div>
         <div class="font-semibold text-rose-800">
          Makine
@@ -424,7 +414,7 @@
     </div><!-- Makine Page -->
     <div id="page-makine" class="page-content hidden">
      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="bg-rose-500 p-2 rounded-xl">��️</span> Makine Takip</h2><button onclick="openMachineModal()" class="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2">
+      <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="bg-rose-500 p-2 rounded-xl">🏭</span> Makine Takip</h2><button onclick="openMachineModal()" class="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2">
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
        </svg> Form Ekle </button>
      </div>
@@ -537,8 +527,8 @@
       <h3 id="issue-modal-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><span id="issue-icon" class="bg-red-100 p-2 rounded-xl">⚠️</span> <span id="issue-type-name">Hata Gir</span></h3>
       <form id="issue-form" onsubmit="handleIssueSubmit(event)" class="space-y-5">
        <div>
-        <div class="flex items-center justify-between mb-2"><label for="issue-input" class="block text-sm font-medium text-gray-700" id="issue-label">Hata Detayları</label> <button type="button" onclick="playIssueSound()" class="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white p-2 rounded-lg transition-all shadow-md" title="Ses">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707a1 1 0 011.414 0l4.707 4.707V9a1 1 0 011 1v4a1 1 0 01-1 1h-1.586l-4.707 4.707a1 1 0 01-1.414 0L5.586 15z"></path>
+        <div class="flex items-center justify-between mb-2"><label for="issue-input" class="block text-sm font-medium text-gray-700" id="issue-label">Hata Detayları</label> <button type="button" id="voice-btn" onclick="startVoiceRecognition()" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white p-2 rounded-lg transition-all shadow-md" title="Sesle Yaz">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
           </svg></button>
         </div><textarea id="issue-input" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" placeholder="Detay girin..." rows="4"></textarea>
        </div>
@@ -580,7 +570,9 @@
    </div><!-- Login Page -->
    <div id="login-page" class="fixed inset-0 z-50 gradient-bg hidden">
     <div class="flex items-center justify-center min-h-full p-4">
-     <div class="glass-card rounded-3xl p-10 w-full max-w-md shadow-2xl">
+     <div class="glass-card rounded-3xl p-10 w-full max-w-md shadow-2xl relative"><button onclick="closeLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
       <div class="text-center mb-10">
        <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl text-white shadow-2xl animate-pulse">
         🔐
@@ -674,9 +666,11 @@
     // Authentication functions
     function checkAuth() {
       const savedUser = localStorage.getItem('loggedInUser');
+      const savedRole = localStorage.getItem('userRole');
       if (savedUser) {
         isLoggedIn = true;
         currentUser = savedUser;
+        userRole = savedRole;
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('login-btn').classList.add('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
@@ -692,16 +686,37 @@
       document.getElementById('login-page').classList.remove('hidden');
     }
     
+    function closeLoginModal() {
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('login-form').reset();
+      document.getElementById('login-error').classList.add('hidden');
+    }
+    
+    // Kullanıcı sistemı ve yetkileri
+    const users = {
+      'FATIHGR': { password: '997522', role: 'admin' },
+      'MONTAJ': { password: '232368', role: 'viewer' },
+      'Dogi': { password: '269913', role: 'machine-operator' },
+      'YakupS': { password: '434649', role: 'machine-operator' },
+      'Hakgül': { password: '122456', role: 'machine-operator' }
+    };
+    
+    let userRole = null;
+    
     async function handleLogin(event) {
       event.preventDefault();
       
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       
-      if (username === 'FATIHGR' && password === '997522') {
+      const user = users[username];
+      
+      if (user && user.password === password) {
         isLoggedIn = true;
         currentUser = username;
+        userRole = user.role;
         localStorage.setItem('loggedInUser', username);
+        localStorage.setItem('userRole', userRole);
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('login-btn').classList.add('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
@@ -719,7 +734,9 @@
     function logout() {
       isLoggedIn = false;
       currentUser = null;
+      userRole = null;
       localStorage.removeItem('loggedInUser');
+      localStorage.removeItem('userRole');
       document.getElementById('login-btn').classList.remove('hidden');
       document.getElementById('logout-btn').classList.add('hidden');
       showToast('Çıkış yapıldı');
@@ -734,15 +751,87 @@
       return true;
     }
     
-    // Play sound for issue
-    function playIssueSound() {
-      const text = document.getElementById('issue-type-name').textContent;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'tr-TR';
-        utterance.rate = 1;
-        window.speechSynthesis.speak(utterance);
+    // Speech Recognition (Sesle Yazıya)
+    let recognition = null;
+    let isRecording = false;
+    
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'tr-TR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        recognition.onstart = function() {
+          isRecording = true;
+          const btn = document.getElementById('voice-btn');
+          if (btn) {
+            btn.classList.remove('from-red-500', 'to-pink-500', 'hover:from-red-600', 'hover:to-pink-600');
+            btn.classList.add('from-green-500', 'to-emerald-500', 'hover:from-green-600', 'hover:to-emerald-600', 'animate-pulse');
+            btn.title = 'Dinleniyor...';
+          }
+        };
+        
+        recognition.onresult = function(event) {
+          const transcript = event.results[0][0].transcript;
+          const textarea = document.getElementById('issue-input');
+          if (textarea) {
+            const currentText = textarea.value;
+            textarea.value = currentText ? currentText + ' ' + transcript : transcript;
+          }
+        };
+        
+        recognition.onerror = function(event) {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'no-speech') {
+            showToast('Ses algılanamadı, lütfen tekrar deneyin', 'error');
+          } else if (event.error === 'not-allowed') {
+            showToast('Mikrofon erişimi reddedildi!', 'error');
+          } else {
+            showToast('Ses tanıma hatası: ' + event.error, 'error');
+          }
+          resetVoiceButton();
+        };
+        
+        recognition.onend = function() {
+          resetVoiceButton();
+        };
+      }
+    }
+    
+    function resetVoiceButton() {
+      isRecording = false;
+      const btn = document.getElementById('voice-btn');
+      if (btn) {
+        btn.classList.remove('from-green-500', 'to-emerald-500', 'hover:from-green-600', 'hover:to-emerald-600', 'animate-pulse');
+        btn.classList.add('from-red-500', 'to-pink-500', 'hover:from-red-600', 'hover:to-pink-600');
+        btn.title = 'Sesle Yaz';
+      }
+    }
+    
+    function startVoiceRecognition() {
+      if (!recognition) {
+        initSpeechRecognition();
+      }
+      
+      if (!recognition) {
+        showToast('Tarayıcınız ses tanımayı desteklemiyor!', 'error');
+        return;
+      }
+      
+      if (isRecording) {
+        recognition.stop();
+        resetVoiceButton();
+      } else {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error('Speech recognition start error:', e);
+          showToast('Ses tanıma başlatılamadı', 'error');
+          resetVoiceButton();
+        }
       }
     }
     
@@ -762,6 +851,10 @@
     // Task Modal
     function openTaskModal(personName) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentTaskPerson = personName;
       document.getElementById('task-modal-title').innerHTML = `<span class="bg-blue-100 text-blue-600 p-2 rounded-xl">✓</span> ${personName} - Görev Ekle`;
       document.getElementById('task-modal').classList.remove('hidden');
@@ -781,6 +874,10 @@
     // Machine Modal
     function openMachineModal() {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       document.getElementById('machine-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       
@@ -797,6 +894,10 @@
     // Mazeret Modal
     function openMazeretModal(taskId) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentMazeretTaskId = taskId;
       document.getElementById('mazeret-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -847,6 +948,10 @@
     // Issue Modal
     function openIssueModal(machineId, issueType) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentIssueId = machineId;
       currentIssueType = issueType;
       
@@ -1067,6 +1172,10 @@
     // Task Delete Password Modal
     function openTaskDeletePasswordModal(taskId) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentDeleteTaskId = taskId;
       document.getElementById('task-delete-password-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -1226,6 +1335,10 @@
     // Machine Password Modal
     function openMachinePasswordModal(machineId) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentDeleteMachineId = machineId;
       document.getElementById('machine-password-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -1287,6 +1400,10 @@
     // Edit Machine Modal
     function openEditMachineModal(machineId) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       currentEditMachineId = machineId;
       const machine = machines.find(m => m.id === machineId);
       if (!machine) return;
@@ -1378,6 +1495,10 @@
     // Complete task
     async function completeTask(taskId) {
       if (!requireAuth()) return;
+      if (userRole === 'viewer' || userRole === 'machine-operator') {
+        showToast('Bu işlem için yetkiniz yok!', 'error');
+        return;
+      }
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
       
@@ -1719,7 +1840,7 @@
             <div class="bg-gray-50 rounded-xl p-4 mb-3">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="text-2xl">�����</span>
+                  <span class="text-2xl">🏢</span>
                   <div>
                     <p class="text-xs text-gray-500">Sipariş Firma</p>
                     <p class="font-semibold text-gray-700">${machine.siparis_firma}</p>
@@ -1995,16 +2116,9 @@
           await loadAllData(); // Tüm verileri yükle
         }
       }
-      
-      if (window.dataSdk) {
-        const result = await window.dataSdk.init(dataHandler);
-        if (!result.isOk) {
-          console.error('Data SDK initialization failed');
-        }
-      }
     }
     
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c9165ef67c8db87',t:'MTc3MDI4MzkyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
