@@ -42,6 +42,13 @@
     };
 
     console.log('Firebase initialized successfully!');
+    
+    // Firebase yüklendikten sonra init() çağır
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.initApp) {
+        window.initApp();
+      }
+    });
   </script>
   
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -2213,8 +2220,17 @@
     
     // SDK initialization
     async function init() {
+      console.log('Initializing app...');
+      
+      // Firebase Auth ve DB hazır mı kontrol et
+      if (!window.firebaseAuth || !window.firebaseDB) {
+        console.error('Firebase modules not loaded yet');
+        setTimeout(init, 100); // 100ms sonra tekrar dene
+        return;
+      }
+      
       // Check authentication first
-      checkAuth();
+      await checkAuth();
       
       // Firebase bağlantısını test et ve verileri yükle
       if (window.firebaseDB) {
@@ -2225,7 +2241,15 @@
       }
     }
     
-    init();
+    // Global olarak erişilebilir hale getir
+    window.initApp = init;
+    
+    // DOM hazır olduğunda init çalıştır
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>
