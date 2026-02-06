@@ -10,10 +10,13 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { firebaseConfig } from './firebase-config-private.js';
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
     // Global olarak erişilebilir hale getir
     window.firebaseDB = {
@@ -27,6 +30,15 @@
       query,
       orderBy,
       where
+    };
+
+    window.firebaseAuth = {
+      auth,
+      provider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut,
+      GoogleAuthProvider
     };
 
     console.log('Firebase initialized successfully!');
@@ -578,17 +590,26 @@
         🔐
        </div>
        <h3 class="text-4xl font-bold text-gray-800 mb-2">Görev Dağılımı Sistemi</h3>
-       <p class="text-gray-600 text-lg">Devam etmek için giriş yapın</p>
+       <p class="text-gray-600 text-lg">Google hesabınızla giriş yapın</p>
       </div>
-      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-6">
-       <div><label for="username" class="block text-sm font-semibold text-gray-700 mb-2"> Kullanıcı Adı </label> <input type="text" id="username" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Kullanıcı adınızı girin..." autofocus>
-       </div>
-       <div><label for="password" class="block text-sm font-semibold text-gray-700 mb-2"> Şifre </label> <input type="password" id="password" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Şifrenizi girin...">
-        <div id="login-error" class="text-red-500 text-sm mt-2 hidden font-medium">
-         ❌ Kullanıcı adı veya şifre yanlış!
+      <div class="space-y-6">
+       <button onclick="handleGoogleLogin()" type="button" class="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3">
+        <svg class="w-6 h-6" viewBox="0 0 24 24">
+         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Google ile Giriş Yap
+       </button>
+        <div id="login-error" class="text-red-500 text-sm mt-2 hidden font-medium text-center">
+         ❌ Giriş başarısız! Bu e-posta adresinin izni yok.
         </div>
        </div>
-       <button type="submit" id="login-submit-btn" class="w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl"> 
+      </div>
+     </div>
+    </div>
+   </div><!-- Machine Password Modal --> 
         <span class="flex items-center justify-center gap-2">
          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
          Giriş Yap
@@ -663,84 +684,117 @@
     let currentDeleteTaskId = null;
     let isLoggedIn = false;
     let currentUser = null;
+    let userRole = 'admin'; // Tüm izinli kullanıcılar admin
+    let firebaseUser = null;
+    
+    // Allowed emails
+    const allowedEmails = [
+      'fatihgural80@gmail.com'
+    ];
     
     // Authentication functions
-    function checkAuth() {
-      const savedUser = localStorage.getItem('loggedInUser');
-      const savedRole = localStorage.getItem('userRole');
-      if (savedUser) {
+    async function checkAuth() {
+      const { auth, onAuthStateChanged } = window.firebaseAuth;
+      
+      onAuthStateChanged(auth, async (user) => {
+        if (user && allowedEmails.includes(user.email)) {
+          // Kullanıcı giriş yapmış ve izinli
+          isLoggedIn = true;
+          currentUser = user.displayName || user.email;
+          firebaseUser = user;
+          userRole = 'admin';
+          
+          document.getElementById('login-page').classList.add('hidden');
+          document.getElementById('login-btn').classList.add('hidden');
+          document.getElementById('logout-btn').classList.remove('hidden');
+          document.getElementById('username-display').textContent = currentUser;
+          
+          // Verileri yükle
+          await loadAllData();
+        } else if (user && !allowedEmails.includes(user.email)) {
+          // Kullanıcı giriş yapmış ama izni yok
+          await handleUnauthorizedUser();
+        } else {
+          // Kullanıcı giriş yapmamış
+          isLoggedIn = false;
+          currentUser = null;
+          firebaseUser = null;
+          document.getElementById('login-btn').classList.remove('hidden');
+          document.getElementById('logout-btn').classList.add('hidden');
+        }
+      });
+    }
+    
+    async function handleUnauthorizedUser() {
+      const { auth, signOut } = window.firebaseAuth;
+      await signOut(auth);
+      showToast('Bu e-posta adresinin erişim izni yok!', 'error');
+      document.getElementById('login-error').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('login-error').classList.add('hidden');
+      }, 5000);
+    }
+    
+    async function handleGoogleLogin() {
+      try {
+        const { auth, provider, signInWithPopup } = window.firebaseAuth;
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        
+        if (!allowedEmails.includes(user.email)) {
+          await handleUnauthorizedUser();
+          return;
+        }
+        
         isLoggedIn = true;
-        currentUser = savedUser;
-        userRole = savedRole;
+        currentUser = user.displayName || user.email;
+        firebaseUser = user;
+        userRole = 'admin';
+        
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('login-btn').classList.add('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
         document.getElementById('username-display').textContent = currentUser;
-      } else {
-        isLoggedIn = false;
-        document.getElementById('login-btn').classList.remove('hidden');
-        document.getElementById('logout-btn').classList.add('hidden');
+        document.getElementById('login-error').classList.add('hidden');
+        
+        showToast('Hoş geldiniz, ' + currentUser + '!', 'success');
+        
+        // Verileri yükle
+        await loadAllData();
+      } catch (error) {
+        console.error('Google login error:', error);
+        showToast('Giriş yapılamadı!', 'error');
+        document.getElementById('login-error').classList.remove('hidden');
       }
     }
     
     function openLoginModal() {
       document.getElementById('login-page').classList.remove('hidden');
+      document.getElementById('login-error').classList.add('hidden');
     }
     
     function closeLoginModal() {
       document.getElementById('login-page').classList.add('hidden');
-      document.getElementById('login-form').reset();
       document.getElementById('login-error').classList.add('hidden');
     }
     
-    // Kullanıcı sistemı ve yetkileri
-    const users = {
-      'FATIHGR': { password: '997522', role: 'admin' },
-      'MONTAJ': { password: '232368', role: 'viewer' },
-      'Dogi': { password: '269913', role: 'machine-operator' },
-      'YakupS': { password: '434649', role: 'machine-operator' },
-      'Hakgül': { password: '122456', role: 'machine-operator' }
-    };
-    
-    let userRole = null;
-    
-    async function handleLogin(event) {
-      event.preventDefault();
-      
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      
-      const user = users[username];
-      
-      if (user && user.password === password) {
-        isLoggedIn = true;
-        currentUser = username;
-        userRole = user.role;
-        localStorage.setItem('loggedInUser', username);
-        localStorage.setItem('userRole', userRole);
-        document.getElementById('login-page').classList.add('hidden');
-        document.getElementById('login-btn').classList.add('hidden');
-        document.getElementById('logout-btn').classList.remove('hidden');
-        document.getElementById('username-display').textContent = username;
-        document.getElementById('login-error').classList.add('hidden');
-        showToast('Hoş geldiniz, ' + username + '!', 'success');
+    async function logout() {
+      try {
+        const { auth, signOut } = window.firebaseAuth;
+        await signOut(auth);
         
-        // Verileri yükle
-        await loadAllData();
-      } else {
-        document.getElementById('login-error').classList.remove('hidden');
+        isLoggedIn = false;
+        currentUser = null;
+        firebaseUser = null;
+        userRole = null;
+        
+        document.getElementById('login-btn').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+        showToast('Çıkış yapıldı');
+      } catch (error) {
+        console.error('Logout error:', error);
+        showToast('Çıkış yapılamadı!', 'error');
       }
-    }
-    
-    function logout() {
-      isLoggedIn = false;
-      currentUser = null;
-      userRole = null;
-      localStorage.removeItem('loggedInUser');
-      localStorage.removeItem('userRole');
-      document.getElementById('login-btn').classList.remove('hidden');
-      document.getElementById('logout-btn').classList.add('hidden');
-      showToast('Çıkış yapıldı');
     }
     
     function requireAuth() {
@@ -749,6 +803,8 @@
         openLoginModal();
         return false;
       }
+      return true;
+    }
       return true;
     }
     
