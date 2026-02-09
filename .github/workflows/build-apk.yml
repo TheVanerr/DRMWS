@@ -24,11 +24,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Install Bubblewrap
-        run: |
-          npm install -g @bubblewrap/cli
-          bubblewrap doctor
-      
       - name: Convert icons to PNG
         run: |
           sudo apt-get update
@@ -36,20 +31,31 @@ jobs:
           convert icon-192.svg icon-192.png
           convert icon-512.svg icon-512.png
       
-      - name: Update manifest with PNG icons
+      - name: Install Capacitor
         run: |
-          sed -i 's/icon-192.svg/icon-192.png/g' manifest.json
-          sed -i 's/icon-512.svg/icon-512.png/g' manifest.json
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
       
-      - name: Initialize Bubblewrap Project
+      - name: Initialize Capacitor
         run: |
-          bubblewrap init --manifest https://thevanerrr.github.io/DRMWS/manifest.json
+          npx cap init "Gorev Takip" "com.drmws.gorevtakip" --web-dir .
       
-      - name: Build APK with Bubblewrap
+      - name: Add Android Platform
+        run: npx cap add android
+      
+      - name: Sync Capacitor
+        run: npx cap sync
+      
+      - name: Build Android APK
         run: |
-          bubblewrap build
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      
+      - name: Copy APK
+        run: |
           mkdir -p build
-          cp app-release-unsigned.apk build/gorev-takip.apk || cp *.apk build/ || true
+          cp android/app/build/outputs/apk/debug/app-debug.apk build/gorev-takip.apk
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -79,3 +85,4 @@ jobs:
             4. Bildirim iznini ver
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
