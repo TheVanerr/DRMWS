@@ -18,41 +18,38 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Install PWA Builder CLI
-        run: npm install -g @pwabuilder/cli
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       
-      - name: Create deployment directory
+      - name: Install Bubblewrap
         run: |
-          mkdir -p deploy
-          cp -r * deploy/ || true
-          cd deploy
-          rm -rf .git .github node_modules || true
+          npm install -g @bubblewrap/cli
+          bubblewrap doctor
       
       - name: Convert icons to PNG
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
-          cd deploy
           convert icon-192.svg icon-192.png
           convert icon-512.svg icon-512.png
       
       - name: Update manifest with PNG icons
         run: |
-          cd deploy
           sed -i 's/icon-192.svg/icon-192.png/g' manifest.json
           sed -i 's/icon-512.svg/icon-512.png/g' manifest.json
       
-      - name: Setup local server and build APK
+      - name: Initialize Bubblewrap Project
         run: |
-          cd deploy
-          # Start a simple HTTP server in background
-          python3 -m http.server 8080 &
-          sleep 5
-          
-          # Build APK using PWABuilder
-          pwa-build android \
-            --manifest manifest.json \
-            --output ../build
+          bubblewrap init --manifest https://thevanerrr.github.io/DRMWS/manifest.json
+      
+      - name: Build APK with Bubblewrap
+        run: |
+          bubblewrap build
+          mkdir -p build
+          cp app-release-unsigned.apk build/gorev-takip.apk || cp *.apk build/ || true
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
