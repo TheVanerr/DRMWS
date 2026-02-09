@@ -23,7 +23,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
     // Firebase Configuration
@@ -61,6 +61,7 @@
       provider,
       signInWithPopup,
       signInWithRedirect,
+      signInWithCredential,
       getRedirectResult,
       onAuthStateChanged,
       signOut,
@@ -1030,42 +1031,78 @@
     async function handleGoogleLogin() {
       try {
         console.log('Starting Google login...');
-        console.log('User Agent:', navigator.userAgent);
-        console.log('URL:', window.location.href);
-        const { auth, provider, signInWithRedirect } = window.firebaseAuth;
+        const { auth, provider, signInWithPopup } = window.firebaseAuth;
         
         if (!auth || !provider) {
-          console.error('Firebase Auth not initialized');
           showToast('Firebase Auth yüklenmedi. Sayfayı yenileyin.', 'error');
           return;
         }
         
-        // signInWithRedirect kullan - WebView ve tarayıcıda çalışır
-        console.log('Using signInWithRedirect...');
-        showToast('Google giriş sayfasına yönlendiriliyorsunuz...', 'info');
-        await signInWithRedirect(auth, provider);
+        // Önce normal popup dene
+        try {
+          console.log('Trying signInWithPopup...');
+          const result = await signInWithPopup(auth, provider);
+          handleLoginSuccess(result.user);
+          return;
+        } catch (popupErr) {
+          console.log('Popup failed:', popupErr.code);
+          // WebView'da popup çalışmıyorsa harici tarayıcıda auth sayfasını aç
+          openExternalAuth();
+        }
         
       } catch (error) {
         console.error('Google login error:', error);
+        showToast(`Hata: ${error.message}`, 'error');
+      }
+    }
+    
+    // Harici tarayıcıda auth sayfasını aç
+    function openExternalAuth() {
+      const authUrl = 'https://thevanerr.github.io/DRMWS/auth.html';
+      
+      // Sistemi tarayıcısında aç (Chrome)
+      window.open(authUrl, '_system') || window.open(authUrl, '_blank');
+      
+      // Kullanıcıya bilgi göster
+      showAuthWaitingUI();
+    }
+    
+    // Auth beklerken UI göster
+    function showAuthWaitingUI() {
+      const loginError = document.getElementById('login-error');
+      loginError.innerHTML = `
+        <div class="text-center space-y-3">
+          <div class="animate-pulse text-blue-600 text-lg font-bold">⏳ Tarayıcıda giriş yapmanız bekleniyor...</div>
+          <p class="text-gray-500 text-sm">Chrome'da Google hesabınızla giriş yaptıktan sonra buraya geri dönün ve aşağıdaki butona basın.</p>
+          <button onclick="checkExternalAuthResult()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+            ✅ Giriş Yaptım, Kontrol Et
+          </button>
+          <br>
+          <button onclick="handleGoogleLogin()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">
+            🔄 Tekrar Dene
+          </button>
+        </div>
+      `;
+      loginError.classList.remove('hidden');
+    }
+    
+    // Harici auth sonucunu kontrol et
+    async function checkExternalAuthResult() {
+      try {
+        const { auth, onAuthStateChanged } = window.firebaseAuth;
         
-        // Hatayı ekranda detaylı göster (debug)
-        const errorDetail = `Hata: ${error.code || 'unknown'}\n${error.message || error}`;
-        
-        let errorMessage = 'Giriş yapılamadı!';
-        
-        if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = 'Bu domain yetkilendirilmemiş.';
-        } else if (error.code === 'auth/operation-not-allowed') {
-          errorMessage = 'Google Sign-In etkinleştirilmemiş.';
-        } else if (error.code === 'auth/internal-error') {
-          errorMessage = 'Dahili hata: ' + (error.message || '').substring(0, 100);
-        } else {
-          errorMessage = errorDetail;
+        // Firebase auth state'ini kontrol et
+        const user = auth.currentUser;
+        if (user) {
+          handleLoginSuccess(user);
+          document.getElementById('login-error').classList.add('hidden');
+          await loadAllData();
+          return;
         }
         
-        showToast(errorMessage, 'error');
-        document.getElementById('login-error').textContent = errorDetail;
-        document.getElementById('login-error').classList.remove('hidden');
+        showToast('Henüz giriş yapılmamış. Tarayıcıda Google ile giriş yapın.', 'error');
+      } catch (error) {
+        showToast(`Hata: ${error.message}`, 'error');
       }
     }
     

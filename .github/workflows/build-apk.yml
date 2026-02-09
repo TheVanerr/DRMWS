@@ -52,6 +52,7 @@ jobs:
           cp index.html www/
           cp manifest.json www/
           cp firebase-messaging-sw.js www/
+          cp auth.html www/
           cp icon-192.png www/
           cp icon-512.png www/
           cp version.json www/
