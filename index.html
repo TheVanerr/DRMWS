@@ -999,7 +999,6 @@
     async function handleGoogleLogin() {
       try {
         console.log('Starting Google login...');
-        console.log('Is Capacitor/WebView:', window.isCapacitorApp);
         console.log('User Agent:', navigator.userAgent);
         const { auth, provider, signInWithPopup, signInWithRedirect } = window.firebaseAuth;
         
@@ -1009,11 +1008,29 @@
           return;
         }
         
-        // Her zaman signInWithRedirect kullan (hem mobil hem masaüstünde çalışır)
-        console.log('Using signInWithRedirect for login...');
-        showToast('Google giriş sayfasına yönlendiriliyorsunuz...', 'info');
-        await signInWithRedirect(auth, provider);
-        return;
+        // Önce signInWithPopup dene (GitHub Pages üzerinden yüklendiğinde çalışır)
+        try {
+          console.log('Trying signInWithPopup...');
+          const result = await signInWithPopup(auth, provider);
+          handleLoginSuccess(result.user);
+          return;
+        } catch (popupError) {
+          console.log('Popup failed:', popupError.code, popupError.message);
+          
+          // Popup engellenirse veya WebView'da çalışmazsa redirect dene
+          if (popupError.code === 'auth/popup-blocked' || 
+              popupError.code === 'auth/popup-closed-by-user' ||
+              popupError.code === 'auth/cancelled-popup-request' ||
+              popupError.code === 'auth/internal-error' ||
+              popupError.code === 'auth/operation-not-supported-in-this-environment') {
+            console.log('Falling back to signInWithRedirect...');
+            showToast('Google giriş sayfasına yönlendiriliyorsunuz...', 'info');
+            await signInWithRedirect(auth, provider);
+            return;
+          }
+          // Diğer hatalar aşağıya düşsün
+          throw popupError;
+        }
         
       } catch (error) {
         console.error('Google login error:', error);
@@ -1023,11 +1040,13 @@
         let errorMessage = 'Giriş yapılamadı!';
         
         if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = 'Bu domain Firebase Console\'da yetkilendirilmemiş. Firebase Console > Authentication > Settings > Authorized domains bölümünden "thevanerr.github.io" ekleyin.';
+          errorMessage = 'Firebase Console > Authentication > Settings > Authorized domains bölümünden "thevanerr.github.io" ekleyin.';
         } else if (error.code === 'auth/operation-not-allowed') {
           errorMessage = 'Google Sign-In Firebase Console\'da etkinleştirilmemiş.';
         } else if (error.code === 'auth/internal-error') {
           errorMessage = 'Giriş hatası. Lütfen tekrar deneyin.';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = 'Giriş penceresi kapatıldı.';
         }
         
         showToast(errorMessage, 'error');
