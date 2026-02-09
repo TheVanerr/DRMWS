@@ -49,11 +49,26 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Configure Android for internet access
+      - name: Configure Android for internet and auth
         run: |
-          cat android/app/src/main/AndroidManifest.xml
-          sed -i 's|android:usesCleartextTraffic="false"|android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml || true
-          sed -i 's|<application|<application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml || true
+          # AndroidManifest.xml'i güncelle - cleartext ve intent izinleri
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          cat $MANIFEST
+          
+          # usesCleartextTraffic ekle
+          sed -i 's|<application|<application android:usesCleartextTraffic="true"|' $MANIFEST
+          
+          # Google Auth için intent filter ekle - browsable activity
+          sed -i '/<\/activity>/i\
+            <intent-filter>\
+              <action android:name="android.intent.action.VIEW" \/>\
+              <category android:name="android.intent.category.DEFAULT" \/>\
+              <category android:name="android.intent.category.BROWSABLE" \/>\
+              <data android:scheme="https" android:host="drmws-78227.firebaseapp.com" android:pathPrefix="\/__\/auth\/handler" \/>\
+            <\/intent-filter>' $MANIFEST
+          
+          echo "--- Updated manifest ---"
+          cat $MANIFEST
 
       - name: Sync Capacitor
         run: npx cap sync android

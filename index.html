@@ -12,10 +12,10 @@
   <title>Görev Dağılımı Sistemi</title>
   
   <!-- PWA Manifest -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   
   <!-- Apple Touch Icons -->
-  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -23,7 +23,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
     // Firebase Configuration
@@ -60,10 +60,17 @@
       auth,
       provider,
       signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       onAuthStateChanged,
       signOut,
       GoogleAuthProvider
     };
+
+    // Capacitor/WebView ortamını tespit et
+    window.isCapacitorApp = (window.Capacitor !== undefined) || 
+                           (navigator.userAgent.includes('wv')) || 
+                           (document.URL.indexOf('http://localhost') === 0 && navigator.userAgent.includes('Android'));
 
     window.firebaseMessaging = {
       messaging,
@@ -75,7 +82,7 @@
     
     // Service Worker'ı kaydet
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      navigator.serviceWorker.register('firebase-messaging-sw.js')
         .then((registration) => {
           console.log('Service Worker registered:', registration);
         })
@@ -914,7 +921,26 @@
     
     // Authentication functions
     async function checkAuth() {
-      const { auth, onAuthStateChanged } = window.firebaseAuth;
+      const { auth, onAuthStateChanged, getRedirectResult } = window.firebaseAuth;
+      
+      // Redirect sonucunu kontrol et (mobil uygulamada redirect ile login yapılıyorsa)
+      try {
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult && redirectResult.user) {
+          console.log('Redirect login successful:', redirectResult.user.email);
+          handleLoginSuccess(redirectResult.user);
+          await loadAllData();
+          
+          if (isAdmin) {
+            await requestNotificationPermission();
+            await listenForNotifications();
+          }
+          setupMessageListener();
+          return;
+        }
+      } catch (redirectError) {
+        console.log('No redirect result or error:', redirectError);
+      }
       
       onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -972,45 +998,50 @@
     async function handleGoogleLogin() {
       try {
         console.log('Starting Google login...');
-        const { auth, provider, signInWithPopup } = window.firebaseAuth;
+        console.log('Is Capacitor/WebView:', window.isCapacitorApp);
+        const { auth, provider, signInWithPopup, signInWithRedirect } = window.firebaseAuth;
         
-        if (!auth || !provider || !signInWithPopup) {
+        if (!auth || !provider) {
           console.error('Firebase Auth not initialized');
           showToast('Firebase Auth yüklenmedi. Sayfayı yenileyin.', 'error');
           return;
         }
         
-        console.log('Opening Google sign-in popup...');
-        const result = await signInWithPopup(auth, provider);
-        console.log('Sign-in successful:', result.user.email);
-        const user = result.user;
+        let result;
         
-        console.log('User authorized:', user.email);
-        isLoggedIn = true;
-        currentUser = user.displayName || user.email;
-        firebaseUser = user;
+        if (window.isCapacitorApp) {
+          // Mobil uygulama (WebView) içinde: Harici tarayıcıda Google Sign-In aç
+          console.log('Using external browser for login...');
+          const googleAuthUrl = buildGoogleAuthUrl();
+          window.open(googleAuthUrl, '_system');
+          return;
+        } else {
+          // Normal tarayıcı: Popup kullan
+          console.log('Opening Google sign-in popup...');
+          result = await signInWithPopup(auth, provider);
+        }
         
-        // Admin kontrolü
-        isAdmin = (user.email === adminEmail);
-        userRole = isAdmin ? 'admin' : 'viewer';
-        
-        document.getElementById('login-page').classList.add('hidden');
-        document.getElementById('login-btn').classList.add('hidden');
-        document.getElementById('logout-btn').classList.remove('hidden');
-        
-        const displayText = isAdmin ? `${currentUser} (Admin)` : currentUser;
-        document.getElementById('username-display').textContent = displayText;
-        document.getElementById('login-error').classList.add('hidden');
-        
-        const welcomeMsg = isAdmin ? `Hoş geldiniz, ${currentUser}! (Admin)` : `Hoş geldiniz, ${currentUser}! (Görüntüleme)`;
-        showToast(welcomeMsg, 'success');
-        
-        // Verileri yükle
-        await loadAllData();
+        handleLoginSuccess(result.user);
       } catch (error) {
         console.error('Google login error:', error);
         console.error('Error code:', error.code);
         console.error('Error message:', error.message);
+        
+        // Popup başarısız olursa redirect'i dene
+        if (error.code === 'auth/popup-blocked' || 
+            error.code === 'auth/popup-closed-by-user' ||
+            error.code === 'auth/cancelled-popup-request' ||
+            error.code === 'auth/internal-error') {
+          try {
+            console.log('Popup failed, trying redirect...');
+            showToast('Yönlendiriliyorsunuz...', 'info');
+            const { auth, provider, signInWithRedirect } = window.firebaseAuth;
+            await signInWithRedirect(auth, provider);
+            return;
+          } catch (redirectError) {
+            console.error('Redirect also failed:', redirectError);
+          }
+        }
         
         let errorMessage = 'Giriş yapılamadı!';
         
@@ -1028,6 +1059,38 @@
         document.getElementById('login-error').textContent = errorMessage;
         document.getElementById('login-error').classList.remove('hidden');
       }
+    }
+    
+    // Login başarılı olduğunda
+    function handleLoginSuccess(user) {
+      console.log('Sign-in successful:', user.email);
+      
+      isLoggedIn = true;
+      currentUser = user.displayName || user.email;
+      firebaseUser = user;
+      
+      // Admin kontrolü
+      isAdmin = (user.email === adminEmail);
+      userRole = isAdmin ? 'admin' : 'viewer';
+      
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('login-btn').classList.add('hidden');
+      document.getElementById('logout-btn').classList.remove('hidden');
+      
+      const displayText = isAdmin ? `${currentUser} (Admin)` : currentUser;
+      document.getElementById('username-display').textContent = displayText;
+      document.getElementById('login-error').classList.add('hidden');
+      
+      const welcomeMsg = isAdmin ? `Hoş geldiniz, ${currentUser}! (Admin)` : `Hoş geldiniz, ${currentUser}! (Görüntüleme)`;
+      showToast(welcomeMsg, 'success');
+    }
+    
+    // Google OAuth URL oluştur (mobil uygulama için)
+    function buildGoogleAuthUrl() {
+      const clientId = '68627643543-BURAYA_WEB_CLIENT_ID.apps.googleusercontent.com';
+      const redirectUri = encodeURIComponent('https://drmws-78227.firebaseapp.com/__/auth/handler');
+      const scope = encodeURIComponent('email profile');
+      return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account`;
     }
     
     function openLoginModal() {

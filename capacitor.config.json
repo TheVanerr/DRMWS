@@ -3,8 +3,14 @@
   "appName": "Görev Takip",
   "webDir": "www",
   "server": {
-    "url": "https://thevanerr.github.io/DRMWS",
-    "cleartext": true
+    "androidScheme": "https",
+    "allowNavigation": [
+      "*.google.com",
+      "*.googleapis.com",
+      "*.firebaseapp.com",
+      "*.gstatic.com",
+      "accounts.google.com"
+    ]
   },
   "plugins": {
     "PushNotifications": {
