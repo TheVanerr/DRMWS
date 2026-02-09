@@ -1,0 +1,84 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install PWA Builder CLI
+        run: npm install -g @pwabuilder/cli
+      
+      - name: Create deployment directory
+        run: |
+          mkdir -p deploy
+          cp -r * deploy/ || true
+          cd deploy
+          rm -rf .git .github node_modules || true
+      
+      - name: Convert icons to PNG
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          cd deploy
+          convert icon-192.svg icon-192.png
+          convert icon-512.svg icon-512.png
+      
+      - name: Update manifest with PNG icons
+        run: |
+          cd deploy
+          sed -i 's/icon-192.svg/icon-192.png/g' manifest.json
+          sed -i 's/icon-512.svg/icon-512.png/g' manifest.json
+      
+      - name: Setup local server and build APK
+        run: |
+          cd deploy
+          # Start a simple HTTP server in background
+          python3 -m http.server 8080 &
+          sleep 5
+          
+          # Build APK using PWABuilder
+          pwa-build android \
+            --manifest manifest.json \
+            --output ../build
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: gorev-takip-app
+          path: build/*.apk
+          retention-days: 30
+      
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: Görev Takip App v1.0.${{ github.run_number }}
+          body: |
+            🎉 Yeni sürüm hazır!
+            
+            📱 Android APK indir ve yükle
+            🔔 Push bildirimleri aktif
+            ✨ Tüm özellikler çalışıyor
+            
+            **Kurulum:**
+            1. APK'yı indir
+            2. "Bilinmeyen kaynaklardan yükleme"ye izin ver
+            3. APK'yı yükle
+            4. Bildirim iznini ver
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

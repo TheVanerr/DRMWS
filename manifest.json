@@ -1,0 +1,43 @@
+{
+  "name": "Görev Takip Sistemi",
+  "short_name": "Görev Takip",
+  "description": "Görev dağılımı ve takip sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Montaj",
+      "short_name": "Montaj",
+      "description": "Montaj departmanı görevleri",
+      "url": "/?page=montaj",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Kaynak",
+      "short_name": "Kaynak",
+      "description": "Kaynak departmanı görevleri",
+      "url": "/?page=kaynak",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
