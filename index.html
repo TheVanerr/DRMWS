@@ -11,6 +11,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -26,6 +27,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
+    const messaging = getMessaging(app);
 
     // Global olarak erişilebilir hale getir
     window.firebaseDB = {
@@ -50,7 +52,24 @@
       GoogleAuthProvider
     };
 
+    window.firebaseMessaging = {
+      messaging,
+      getToken,
+      onMessage
+    };
+
     console.log('Firebase initialized successfully!');
+    
+    // Service Worker'ı kaydet
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered:', registration);
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
     
     // Firebase yüklendikten sonra init() çağır
     window.addEventListener('DOMContentLoaded', () => {
@@ -703,9 +722,182 @@
     let userRole = 'viewer'; // Varsayılan olarak sadece görüntüleme
     let firebaseUser = null;
     let isAdmin = false;
+    let fcmToken = null;
     
     // Admin email
     const adminEmail = 'fatihgural80@gmail.com';
+    
+    // FCM Notification functions
+    async function requestNotificationPermission() {
+      try {
+        console.log('Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
+          console.log('Notification permission granted.');
+          await getFCMToken();
+        } else {
+          console.log('Notification permission denied.');
+        }
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+      }
+    }
+    
+    async function getFCMToken() {
+      try {
+        const { messaging, getToken } = window.firebaseMessaging;
+        
+        // VAPID key - Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
+        const vapidKey = 'BURAYA_VAPID_KEY_GELECEK'; // Bu key'i Firebase Console'dan alacağız
+        
+        const token = await getToken(messaging, { vapidKey });
+        
+        if (token) {
+          console.log('FCM Token:', token);
+          fcmToken = token;
+          
+          // Token'ı Firestore'da kullanıcı ile birlikte sakla
+          await saveFCMToken(token);
+          
+          showToast('Bildirimler etkinleştirildi!', 'success');
+        } else {
+          console.log('No registration token available.');
+        }
+      } catch (error) {
+        console.error('An error occurred while retrieving token:', error);
+      }
+    }
+    
+    async function saveFCMToken(token) {
+      try {
+        const { db, collection, doc, updateDoc, addDoc, getDocs, query, where } = window.firebaseDB;
+        
+        // Kullanıcı koleksiyonunda token'ı sakla
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', firebaseUser.email));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          // Kullanıcı yoksa ekle
+          await addDoc(usersRef, {
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            fcmToken: token,
+            isAdmin: isAdmin,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          console.log('User created with FCM token');
+        } else {
+          // Kullanıcı varsa token'ı güncelle
+          const userDoc = querySnapshot.docs[0];
+          await updateDoc(doc(db, 'users', userDoc.id), {
+            fcmToken: token,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('FCM token updated');
+        }
+      } catch (error) {
+        console.error('Error saving FCM token:', error);
+      }
+    }
+    
+    // Foreground mesajları dinle (uygulama açıkken gelen bildirimler)
+    function setupMessageListener() {
+      const { messaging, onMessage } = window.firebaseMessaging;
+      
+      onMessage(messaging, (payload) => {
+        console.log('Message received:', payload);
+        
+        const notificationTitle = payload.notification.title;
+        const notificationOptions = {
+          body: payload.notification.body,
+          icon: '/firebase-logo.png' // İsteğe bağlı logo
+        };
+        
+        // Tarayıcı bildirimi göster
+        if (Notification.permission === 'granted') {
+          new Notification(notificationTitle, notificationOptions);
+        }
+        
+        // Toast mesajı da göster
+        showToast(payload.notification.body, 'info');
+      });
+    }
+    
+    // Admin'e bildirim gönder (Firestore üzerinden)
+    async function sendNotificationToAdmin(notificationData) {
+      try {
+        const { db, collection, addDoc } = window.firebaseDB;
+        
+        // Bildirim kaydı oluştur
+        await addDoc(collection(db, 'notifications'), {
+          ...notificationData,
+          recipientEmail: adminEmail,
+          read: false,
+          createdAt: new Date().toISOString()
+        });
+        
+        console.log('Notification created for admin');
+        
+        // Eğer admin şu anda online ise, yerel bildirim göster
+        if (isAdmin && Notification.permission === 'granted') {
+          new Notification(notificationData.title, {
+            body: notificationData.body,
+            icon: '🔔',
+            badge: '🔔'
+          });
+        }
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+    
+    // Bildirimleri dinle (gerçek zamanlı)
+    async function listenForNotifications() {
+      if (!isAdmin) return;
+      
+      try {
+        const { db, collection, query, where, getDocs, updateDoc, doc, orderBy } = window.firebaseDB;
+        
+        // Her 30 saniyede bir yeni bildirimleri kontrol et
+        setInterval(async () => {
+          const notificationsRef = collection(db, 'notifications');
+          const q = query(
+            notificationsRef,
+            where('recipientEmail', '==', adminEmail),
+            where('read', '==', false),
+            orderBy('createdAt', 'desc')
+          );
+          
+          const querySnapshot = await getDocs(q);
+          
+          querySnapshot.forEach(async (docSnap) => {
+            const notification = docSnap.data();
+            
+            // Bildirim göster
+            if (Notification.permission === 'granted') {
+              new Notification(notification.title, {
+                body: notification.body,
+                icon: '🔔',
+                badge: '🔔',
+                tag: docSnap.id
+              });
+            }
+            
+            // Okundu olarak işaretle
+            await updateDoc(doc(db, 'notifications', docSnap.id), {
+              read: true,
+              readAt: new Date().toISOString()
+            });
+          });
+        }, 30000); // 30 saniye
+        
+      } catch (error) {
+        console.error('Error listening for notifications:', error);
+      }
+    }
     
     // Authentication functions
     async function checkAuth() {
@@ -731,6 +923,16 @@
           
           // Verileri yükle
           await loadAllData();
+          
+          // Admin ise bildirim izni iste
+          if (isAdmin) {
+            await requestNotificationPermission();
+            // Bildirimleri dinlemeye başla
+            await listenForNotifications();
+          }
+          
+          // Message listener'ı başlat
+          setupMessageListener();
           
           // Admin değilse bilgi göster
           if (!isAdmin) {
@@ -2101,6 +2303,15 @@
         if (result.isOk) {
           closeTaskModal();
           showToast('Görev eklendi!');
+          
+          // Admin'e bildirim gönder
+          await sendNotificationToAdmin({
+            title: 'Yeni Görev Eklendi',
+            body: `${currentTaskPerson} için yeni görev: ${gorevTanimlamasi.substring(0, 50)}...`,
+            taskId: result.data.id,
+            type: 'new_task'
+          });
+          
           await loadAllData(); // Verileri yeniden yükle
         } else {
           showToast('Hata!', 'error');
