@@ -1,0 +1,14 @@
+{
+  "appId": "com.drmws.gorevtakip",
+  "appName": "Görev Takip",
+  "webDir": "www",
+  "server": {
+    "url": "https://thevanerr.github.io/DRMWS",
+    "cleartext": true
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

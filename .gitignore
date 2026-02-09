@@ -1,3 +1,11 @@
 .env
 firebase-config-private.js
 config.js
+node_modules/
+www/
+android/
+ios/
+output/
+build/
+package-lock.json
+*.apk
