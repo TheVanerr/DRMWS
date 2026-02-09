@@ -181,6 +181,25 @@
   <style>@view-transition { navigation: auto; }</style>
  </head>
  <body class="h-full gradient-bg">
+  <!-- Güncelleme Bannerı -->
+  <div id="update-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 shadow-lg">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <div>
+          <p class="font-bold text-sm">Yeni güncelleme mevcut! <span id="update-version"></span></p>
+          <p class="text-xs opacity-90" id="update-changelog"></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a id="update-download-btn" href="#" target="_blank" class="px-4 py-1.5 bg-white text-green-700 rounded-lg font-bold text-sm hover:bg-green-50 transition-all">Güncelle</a>
+        <button onclick="document.getElementById('update-banner').classList.add('hidden')" class="p-1 hover:bg-white/20 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="app" class="h-full flex flex-col overflow-auto"><!-- Header -->
    <header class="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4 flex justify-between items-center">
     <h1 id="site-title" class="text-2xl font-bold text-white">Görev Dağılımı Sistemi</h1>
@@ -2559,9 +2578,34 @@
     // Global olarak erişilebilir hale getir
     window.firebaseOps = firebaseOperations;
     
+    // Uygulama sürümü
+    const APP_VERSION = '1.0.0';
+    const VERSION_CHECK_URL = 'https://raw.githubusercontent.com/TheVanerr/DRMWS/main/version.json';
+    
+    // Güncelleme kontrolü
+    async function checkForUpdates() {
+      try {
+        const response = await fetch(VERSION_CHECK_URL + '?t=' + Date.now());
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (data.version && data.version !== APP_VERSION) {
+          console.log('Yeni sürüm mevcut:', data.version, '(mevcut:', APP_VERSION + ')');
+          document.getElementById('update-version').textContent = 'v' + data.version;
+          document.getElementById('update-changelog').textContent = data.changelog || '';
+          document.getElementById('update-download-btn').href = data.downloadUrl || '#';
+          document.getElementById('update-banner').classList.remove('hidden');
+        } else {
+          console.log('Uygulama güncel. Sürüm:', APP_VERSION);
+        }
+      } catch (error) {
+        console.log('Güncelleme kontrolü başarısız:', error);
+      }
+    }
+
     // SDK initialization
     async function init() {
-      console.log('Initializing app...');
+      console.log('Initializing app... v' + APP_VERSION);
       
       // Firebase Auth ve DB hazır mı kontrol et
       if (!window.firebaseAuth || !window.firebaseDB) {
@@ -2580,6 +2624,9 @@
           await loadAllData(); // Tüm verileri yükle
         }
       }
+      
+      // Güncelleme kontrolü
+      checkForUpdates();
     }
     
     // Global olarak erişilebilir hale getir

@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -12,6 +15,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat version.json | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])")
+          BUILD=$(cat version.json | python3 -c "import sys,json; print(json.load(sys.stdin)['buildNumber'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION-b$BUILD" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js 18
         uses: actions/setup-node@v4
@@ -42,6 +54,7 @@ jobs:
           cp firebase-messaging-sw.js www/
           cp icon-192.png www/
           cp icon-512.png www/
+          cp version.json www/
 
       - name: Install dependencies
         run: npm install
@@ -51,14 +64,12 @@ jobs:
 
       - name: Configure Android for internet and auth
         run: |
-          # AndroidManifest.xml'i güncelle - cleartext ve intent izinleri
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          cat $MANIFEST
           
           # usesCleartextTraffic ekle
           sed -i 's|<application|<application android:usesCleartextTraffic="true"|' $MANIFEST
           
-          # Google Auth için intent filter ekle - browsable activity
+          # Google Auth için intent filter ekle
           sed -i '/<\/activity>/i\
             <intent-filter>\
               <action android:name="android.intent.action.VIEW" \/>\
@@ -66,9 +77,6 @@ jobs:
               <category android:name="android.intent.category.BROWSABLE" \/>\
               <data android:scheme="https" android:host="drmws-78227.firebaseapp.com" android:pathPrefix="\/__\/auth\/handler" \/>\
             <\/intent-filter>' $MANIFEST
-          
-          echo "--- Updated manifest ---"
-          cat $MANIFEST
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -92,4 +100,16 @@ jobs:
           name: GorevTakip-APK
           path: output/GorevTakip.apk
           retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Görev Takip ${{ steps.version.outputs.version }}"
+          body: |
+            ## Görev Takip v${{ steps.version.outputs.version }}
+            
+            APK'yı indirmek için aşağıdaki dosyaya tıklayın.
+          files: output/GorevTakip.apk
+          make_latest: true
 
