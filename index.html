@@ -945,7 +945,9 @@
       
       // Redirect sonucunu kontrol et (mobil uygulamada redirect ile login yapılıyorsa)
       try {
+        console.log('Checking redirect result...');
         const redirectResult = await getRedirectResult(auth);
+        console.log('Redirect result:', redirectResult);
         if (redirectResult && redirectResult.user) {
           console.log('Redirect login successful:', redirectResult.user.email);
           handleLoginSuccess(redirectResult.user);
@@ -959,7 +961,17 @@
           return;
         }
       } catch (redirectError) {
-        console.log('No redirect result or error:', redirectError);
+        console.error('Redirect error:', redirectError.code, redirectError.message);
+        // Hatayı ekranda göster
+        const errMsg = `Giriş hatası: ${redirectError.code || ''}\n${redirectError.message || redirectError}`;
+        showToast(errMsg, 'error');
+        
+        // Hata detayını login error alanında göster
+        const loginErr = document.getElementById('login-error');
+        if (loginErr) {
+          loginErr.textContent = errMsg;
+          loginErr.classList.remove('hidden');
+        }
       }
       
       onAuthStateChanged(auth, async (user) => {
@@ -1019,7 +1031,8 @@
       try {
         console.log('Starting Google login...');
         console.log('User Agent:', navigator.userAgent);
-        const { auth, provider, signInWithPopup, signInWithRedirect } = window.firebaseAuth;
+        console.log('URL:', window.location.href);
+        const { auth, provider, signInWithRedirect } = window.firebaseAuth;
         
         if (!auth || !provider) {
           console.error('Firebase Auth not initialized');
@@ -1027,49 +1040,31 @@
           return;
         }
         
-        // Önce signInWithPopup dene (GitHub Pages üzerinden yüklendiğinde çalışır)
-        try {
-          console.log('Trying signInWithPopup...');
-          const result = await signInWithPopup(auth, provider);
-          handleLoginSuccess(result.user);
-          return;
-        } catch (popupError) {
-          console.log('Popup failed:', popupError.code, popupError.message);
-          
-          // Popup engellenirse veya WebView'da çalışmazsa redirect dene
-          if (popupError.code === 'auth/popup-blocked' || 
-              popupError.code === 'auth/popup-closed-by-user' ||
-              popupError.code === 'auth/cancelled-popup-request' ||
-              popupError.code === 'auth/internal-error' ||
-              popupError.code === 'auth/operation-not-supported-in-this-environment') {
-            console.log('Falling back to signInWithRedirect...');
-            showToast('Google giriş sayfasına yönlendiriliyorsunuz...', 'info');
-            await signInWithRedirect(auth, provider);
-            return;
-          }
-          // Diğer hatalar aşağıya düşsün
-          throw popupError;
-        }
+        // signInWithRedirect kullan - WebView ve tarayıcıda çalışır
+        console.log('Using signInWithRedirect...');
+        showToast('Google giriş sayfasına yönlendiriliyorsunuz...', 'info');
+        await signInWithRedirect(auth, provider);
         
       } catch (error) {
         console.error('Google login error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
+        
+        // Hatayı ekranda detaylı göster (debug)
+        const errorDetail = `Hata: ${error.code || 'unknown'}\n${error.message || error}`;
         
         let errorMessage = 'Giriş yapılamadı!';
         
         if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = 'Firebase Console > Authentication > Settings > Authorized domains bölümünden "thevanerr.github.io" ekleyin.';
+          errorMessage = 'Bu domain yetkilendirilmemiş.';
         } else if (error.code === 'auth/operation-not-allowed') {
-          errorMessage = 'Google Sign-In Firebase Console\'da etkinleştirilmemiş.';
+          errorMessage = 'Google Sign-In etkinleştirilmemiş.';
         } else if (error.code === 'auth/internal-error') {
-          errorMessage = 'Giriş hatası. Lütfen tekrar deneyin.';
-        } else if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = 'Giriş penceresi kapatıldı.';
+          errorMessage = 'Dahili hata: ' + (error.message || '').substring(0, 100);
+        } else {
+          errorMessage = errorDetail;
         }
         
         showToast(errorMessage, 'error');
-        document.getElementById('login-error').textContent = errorMessage;
+        document.getElementById('login-error').textContent = errorDetail;
         document.getElementById('login-error').classList.remove('hidden');
       }
     }
