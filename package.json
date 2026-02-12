@@ -9,7 +9,8 @@
   "dependencies": {
     "@capacitor/android": "^5.7.0",
     "@capacitor/core": "^5.7.0",
-    "@capacitor/ios": "^5.7.0"
+    "@capacitor/ios": "^5.7.0",
+    "@codetrix-studio/capacitor-google-auth": "^3.3.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^5.7.0"

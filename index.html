@@ -1050,28 +1050,49 @@
     async function handleGoogleLogin() {
       try {
         console.log('Starting Google login...');
-        const { auth, provider, signInWithPopup } = window.firebaseAuth;
         
-        if (!auth || !provider) {
-          showToast('Firebase Auth yüklenmedi. Sayfayı yenileyin.', 'error');
-          return;
-        }
-        
-        // Önce normal popup dene
-        try {
-          console.log('Trying signInWithPopup...');
+        // Capacitor ortamında mı kontrol et
+        if (window.Capacitor) {
+          // Native Google Auth plugin kullan
+          console.log('Using native Google Auth plugin');
+          await loginWithNativeGoogleAuth();
+        } else {
+          // Web ortamı - Firebase popup kullan
+          console.log('Using Firebase signInWithPopup');
+          const { auth, provider, signInWithPopup } = window.firebaseAuth;
           const result = await signInWithPopup(auth, provider);
           handleLoginSuccess(result.user);
-          return;
-        } catch (popupErr) {
-          console.log('Popup failed:', popupErr.code);
-          // WebView'da popup çalışmıyorsa harici tarayıcıda auth sayfasını aç
-          openExternalAuth();
         }
         
       } catch (error) {
         console.error('Google login error:', error);
-        showToast(`Hata: ${error.message}`, 'error');
+        showToast(`Giriş hatası: ${error.message}`, 'error');
+      }
+    }
+    
+    // Native Google Auth ile giriş
+    async function loginWithNativeGoogleAuth() {
+      try {
+        // @codetrix-studio/capacitor-google-auth plugin'ini dinamik import et
+        const { GoogleAuth } = await import('https://cdn.jsdelivr.net/npm/@codetrix-studio/capacitor-google-auth@3.3.4/+esm');
+        
+        // Plugin'i başlat
+        await GoogleAuth.initialize();
+        
+        // Google ile giriş yap
+        const googleUser = await GoogleAuth.signIn();
+        console.log('Google user:', googleUser);
+        
+        // Firebase'e token ile giriş yap
+        const { auth, GoogleAuthProvider, signInWithCredential } = window.firebaseAuth;
+        const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        const result = await signInWithCredential(auth, credential);
+        
+        handleLoginSuccess(result.user);
+        
+      } catch (error) {
+        console.error('Native Google Auth error:', error);
+        throw error;
       }
     }
     

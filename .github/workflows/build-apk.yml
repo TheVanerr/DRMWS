@@ -78,6 +78,11 @@ jobs:
 
       - name: Add Android platform
         run: npx cap add android
+        
+      - name: Install Google Auth plugin
+        run: |
+          npm install @codetrix-studio/capacitor-google-auth
+          npx cap sync
 
       - name: Copy google-services.json to Android project
         run: |
