@@ -886,29 +886,68 @@
       });
     }
     
-    // Admin'e bildirim gönder (Firestore üzerinden)
+    // Admin'e bildirim gönder - FCM REST API kullanarak
     async function sendNotificationToAdmin(notificationData) {
       try {
-        const { db, collection, addDoc } = window.firebaseDB;
+        const { db, collection, addDoc, getDocs, query, where } = window.firebaseDB;
         
-        // Bildirim kaydı oluştur
+        // Admin kullanıcının FCM token'ını al
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', adminEmail));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          console.log('Admin user not found');
+          return;
+        }
+        
+        const adminUser = snapshot.docs[0].data();
+        const adminFCMToken = adminUser.fcmToken;
+        
+        if (!adminFCMToken) {
+          console.log('Admin FCM token not found');
+          return;
+        }
+        
+        // Firebase Server Key - bu normalde backend'de tutulmalı ama basitlik için burada
+        const SERVER_KEY = 'YOUR_FIREBASE_SERVER_KEY'; // Firebase Console > Project Settings > Cloud Messaging > Server key
+        
+        // FCM REST API'ye istek gönder
+        const fcmUrl = 'https://fcm.googleapis.com/fcm/send';
+        
+        const response = await fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `key=${SERVER_KEY}`
+          },
+          body: JSON.stringify({
+            to: adminFCMToken,
+            notification: {
+              title: notificationData.title || 'Yeni Bildirim',
+              body: notificationData.body || 'Görev Takip',
+              icon: '/icon-192.png',
+              click_action: window.location.origin
+            },
+            data: {
+              type: notificationData.type || 'general',
+              timestamp: new Date().toISOString()
+            }
+          })
+        });
+        
+        const result = await response.json();
+        console.log('FCM notification sent:', result);
+        
+        // Bildirim kaydı oluştur (log için)
         await addDoc(collection(db, 'notifications'), {
           ...notificationData,
           recipientEmail: adminEmail,
           read: false,
+          sent: result.success === 1,
           createdAt: new Date().toISOString()
         });
         
-        console.log('Notification created for admin');
-        
-        // Eğer admin şu anda online ise, yerel bildirim göster
-        if (isAdmin && Notification.permission === 'granted') {
-          new Notification(notificationData.title, {
-            body: notificationData.body,
-            icon: '🔔',
-            badge: '🔔'
-          });
-        }
       } catch (error) {
         console.error('Error sending notification:', error);
       }
