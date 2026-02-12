@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "68627643543",
+    "project_id": "drmws-78227",
+    "storage_bucket": "drmws-78227.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68627643543:android:067f1bdd32a089d2a3bdd2",
+        "android_client_info": {
+          "package_name": "DRMWS.GT99"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68627643543-mp659h6pqe041akk1fdn0cntnbci3j94.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALWTmWEaogbFH6qONgkXHRnIbb4SMpmrY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "68627643543-mp659h6pqe041akk1fdn0cntnbci3j94.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

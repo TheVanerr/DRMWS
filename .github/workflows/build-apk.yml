@@ -79,6 +79,11 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Copy google-services.json to Android project
+        run: |
+          cp google-services.json android/app/google-services.json
+          echo "google-services.json copied to Android app"
+
       - name: Configure Android for internet and auth
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
