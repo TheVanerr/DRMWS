@@ -886,7 +886,7 @@
       });
     }
     
-    // Admin'e bildirim gönder - FCM REST API kullanarak
+    // Admin'e bildirim gönder - FCM HTTP v1 API kullanarak
     async function sendNotificationToAdmin(notificationData) {
       try {
         const { db, collection, addDoc, getDocs, query, where } = window.firebaseDB;
@@ -909,44 +909,17 @@
           return;
         }
         
-        // Firebase Server Key - bu normalde backend'de tutulmalı ama basitlik için burada
-        const SERVER_KEY = 'YOUR_FIREBASE_SERVER_KEY'; // Firebase Console > Project Settings > Cloud Messaging > Server key
-        
-        // FCM REST API'ye istek gönder
-        const fcmUrl = 'https://fcm.googleapis.com/fcm/send';
-        
-        const response = await fetch(fcmUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `key=${SERVER_KEY}`
-          },
-          body: JSON.stringify({
-            to: adminFCMToken,
-            notification: {
-              title: notificationData.title || 'Yeni Bildirim',
-              body: notificationData.body || 'Görev Takip',
-              icon: '/icon-192.png',
-              click_action: window.location.origin
-            },
-            data: {
-              type: notificationData.type || 'general',
-              timestamp: new Date().toISOString()
-            }
-          })
-        });
-        
-        const result = await response.json();
-        console.log('FCM notification sent:', result);
-        
-        // Bildirim kaydı oluştur (log için)
+        // Bildirim kaydı oluştur - Cloud Function bu kaydı izleyecek ve bildirim gönderecek
         await addDoc(collection(db, 'notifications'), {
           ...notificationData,
           recipientEmail: adminEmail,
+          fcmToken: adminFCMToken,
           read: false,
-          sent: result.success === 1,
+          sent: false,
           createdAt: new Date().toISOString()
         });
+        
+        console.log('Notification record created - waiting for Cloud Function to send push');
         
       } catch (error) {
         console.error('Error sending notification:', error);
