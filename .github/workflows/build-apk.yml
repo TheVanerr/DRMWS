@@ -39,6 +39,22 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Generate Debug Keystore (Consistent SHA-1)
+        run: |
+          # Sabit bir debug keystore oluştur (SHA-1 her zaman aynı olacak)
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          
+          # SHA-1 fingerprint'i göster
+          echo "========================================="
+          echo "SHA-1 FINGERPRINT (Firebase'e ekleyin):"
+          echo "========================================="
+          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android | grep SHA1
+          echo "========================================="
+
       - name: Convert SVG icons to PNG
         run: |
           sudo apt-get update -qq
