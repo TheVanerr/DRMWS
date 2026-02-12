@@ -1052,7 +1052,7 @@
         console.log('Starting Google login...');
         
         // Capacitor ortamında mı kontrol et
-        if (window.Capacitor) {
+        if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
           // Native Google Auth plugin kullan
           console.log('Using native Google Auth plugin');
           await loginWithNativeGoogleAuth();
@@ -1066,22 +1066,29 @@
         
       } catch (error) {
         console.error('Google login error:', error);
-        showToast(`Giriş hatası: ${error.message}`, 'error');
+        showToast(`Giriş hatası: ${error.message || error}`, 'error');
+        document.getElementById('login-error').textContent = `Hata: ${error.message || error}`;
+        document.getElementById('login-error').classList.remove('hidden');
       }
     }
     
     // Native Google Auth ile giriş
     async function loginWithNativeGoogleAuth() {
       try {
-        // @codetrix-studio/capacitor-google-auth plugin'ini dinamik import et
-        const { GoogleAuth } = await import('https://cdn.jsdelivr.net/npm/@codetrix-studio/capacitor-google-auth@3.3.4/+esm');
+        // Capacitor plugin'i kullan
+        if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.GoogleAuth) {
+          throw new Error('Google Auth plugin bulunamadı. Lütfen uygulamayı yeniden yükleyin.');
+        }
         
-        // Plugin'i başlat
-        await GoogleAuth.initialize();
+        const { GoogleAuth } = window.Capacitor.Plugins;
         
         // Google ile giriş yap
         const googleUser = await GoogleAuth.signIn();
         console.log('Google user:', googleUser);
+        
+        if (!googleUser || !googleUser.authentication || !googleUser.authentication.idToken) {
+          throw new Error('Google login başarısız - token alınamadı');
+        }
         
         // Firebase'e token ile giriş yap
         const { auth, GoogleAuthProvider, signInWithCredential } = window.firebaseAuth;
@@ -1092,7 +1099,7 @@
         
       } catch (error) {
         console.error('Native Google Auth error:', error);
-        throw error;
+        throw new Error(`Native login hatası: ${error.message || error}`);
       }
     }
     
