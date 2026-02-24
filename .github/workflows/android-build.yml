@@ -61,6 +61,17 @@ jobs:
         sed -i '/<\/resources>/i \    <string name="server_client_id">68627643543-mp659h6pqe041akk1fdn0cntnbci3j94.apps.googleusercontent.com</string>' android/app/src/main/res/values/strings.xml
         echo "Injected server_client_id into strings.xml"
 
+    - name: Create google-services.json
+      env:
+        GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      run: |
+        if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          echo "$GOOGLE_SERVICES_JSON" > google-services.json
+          echo "google-services.json created from secret"
+        else
+          echo "WARNING: GOOGLE_SERVICES_JSON secret is not set."
+        fi
+
     - name: Copy google-services.json
       run: |
         if [ -f "google-services.json" ]; then

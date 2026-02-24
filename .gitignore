@@ -9,3 +9,6 @@ output/
 build/
 package-lock.json
 *.apk
+
+# Firebase Android config
+google-services.json
