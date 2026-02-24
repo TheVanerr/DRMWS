@@ -791,13 +791,60 @@
     async function requestNotificationPermission() {
       try {
         console.log('Requesting notification permission...');
-        const permission = await Notification.requestPermission();
         
-        if (permission === 'granted') {
-          console.log('Notification permission granted.');
-          await getFCMToken();
+        // Capacitor ortamında mıyız kontrol et
+        if (window.isCapacitorApp && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications) {
+          const { PushNotifications } = window.Capacitor.Plugins;
+          
+          // İzin iste
+          let permStatus = await PushNotifications.checkPermissions();
+          
+          if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+          
+          if (permStatus.receive !== 'granted') {
+            console.log('User denied push permission');
+            return;
+          }
+          
+          // Bildirimleri kaydet
+          await PushNotifications.register();
+          
+          // Token alındığında
+          PushNotifications.addListener('registration', async (token) => {
+            console.log('Push registration success, token: ' + token.value);
+            fcmToken = token.value;
+            await saveFCMToken(token.value);
+            showToast('Bildirimler etkinleştirildi!', 'success');
+          });
+          
+          // Hata durumunda
+          PushNotifications.addListener('registrationError', (error) => {
+            console.error('Error on registration: ' + JSON.stringify(error));
+          });
+          
+          // Bildirim geldiğinde (ön planda)
+          PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log('Push received: ' + JSON.stringify(notification));
+            showToast(notification.title + ': ' + notification.body, 'info');
+          });
+          
+          // Bildirime tıklandığında
+          PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+            console.log('Push action performed: ' + JSON.stringify(notification));
+          });
+          
         } else {
-          console.log('Notification permission denied.');
+          // Web ortamı (PWA)
+          const permission = await Notification.requestPermission();
+          
+          if (permission === 'granted') {
+            console.log('Notification permission granted.');
+            await getFCMToken();
+          } else {
+            console.log('Notification permission denied.');
+          }
         }
       } catch (error) {
         console.error('Error requesting notification permission:', error);
@@ -985,8 +1032,8 @@
           handleLoginSuccess(redirectResult.user);
           await loadAllData();
           
+          await requestNotificationPermission();
           if (isAdmin) {
-            await requestNotificationPermission();
             await listenForNotifications();
           }
           setupMessageListener();
@@ -1027,10 +1074,11 @@
           // Verileri yükle
           await loadAllData();
           
-          // Admin ise bildirim izni iste
+          // Herkes için bildirim izni iste (Mobil app veya PWA)
+          await requestNotificationPermission();
+          
+          // Admin ise bildirimleri dinlemeye başla
           if (isAdmin) {
-            await requestNotificationPermission();
-            // Bildirimleri dinlemeye başla
             await listenForNotifications();
           }
           
