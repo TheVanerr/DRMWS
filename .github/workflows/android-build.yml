@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -27,6 +29,24 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
+    - name: Generate and Commit Keystore
+      run: |
+        if [ ! -f "android-debug.keystore" ]; then
+          echo "Generating new debug keystore..."
+          keytool -genkey -v -keystore android-debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add android-debug.keystore
+          git commit -m "Add persistent debug keystore for Google Auth" || true
+          git push || echo "Failed to push keystore. You may need to give GitHub Actions write permissions."
+        fi
+        
+        echo "================================================================="
+        echo "FIREBASE CONSOLE ICIN SHA-1 PARMAK IZI (BUNU KOPYALAYIN):"
+        keytool -list -v -keystore android-debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1:
+        echo "================================================================="
+
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
@@ -35,6 +55,11 @@ jobs:
 
     - name: Add Android Platform
       run: npx cap add android
+
+    - name: Inject server_client_id to strings.xml
+      run: |
+        sed -i '/<\/resources>/i \    <string name="server_client_id">68627643543-mp659h6pqe041akk1fdn0cntnbci3j94.apps.googleusercontent.com</string>' android/app/src/main/res/values/strings.xml
+        echo "Injected server_client_id into strings.xml"
 
     - name: Copy google-services.json
       run: |
@@ -50,7 +75,7 @@ jobs:
 
     - name: Build APK
       working-directory: ./android
-      run: ./gradlew assembleDebug
+      run: ./gradlew assembleDebug -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android-debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
