@@ -86,8 +86,12 @@ jobs:
 
       - name: Copy google-services.json to Android project
         run: |
-          cp google-services.json android/app/google-services.json
-          echo "google-services.json copied to Android app"
+          if [ -f "google-services.json" ]; then
+            cp google-services.json android/app/google-services.json
+            echo "google-services.json copied to Android app"
+          else
+            echo "WARNING: google-services.json not found. Firebase features may not work in the APK."
+          fi
 
       - name: Configure Android for internet and auth
         run: |
