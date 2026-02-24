@@ -968,6 +968,11 @@
         
         console.log('Notification record created - waiting for Cloud Function to send push');
         
+        // EĞER CLOUD FUNCTIONS ÇALIŞMIYORSA (Yedek Plan):
+        // Doğrudan FCM API'sine istek at (Sadece test/geliştirme için, production'da Cloud Functions kullanılmalı)
+        // Not: Bu yöntem için Server Key gerekir, güvenlik nedeniyle tarayıcıda tutulmamalıdır.
+        // Şimdilik sadece veritabanına yazıyoruz.
+        
       } catch (error) {
         console.error('Error sending notification:', error);
       }
